@@ -44,8 +44,8 @@ B, because `std::expected` is the error-handling idiom the codebase is built on,
 is met by every machine and runner the project uses with no extra dependency, and C++26 is not yet
 implemented across the three compilers.
 
-C++20 modules are not used: CMake, clang-tidy and clangd support is still uneven across the
-three compilers. Headers and `#pragma once`.
+The floor is the oldest release of each compiler that implements every standard feature the code
+uses; raising it is free. Today that is GCC 14 / Clang 18 / MSVC 17.8.
 
 ## Consequences
 
@@ -55,5 +55,5 @@ three compilers. Headers and `#pragma once`.
 - Raising the floor later is cheap. Lowering it below C++23 is the expensive direction.
 - Does not decide how errors are modelled (error type, when to throw, when to abort); that is its
   own decision.
-- Does not decide whether to adopt modules or move to C++26 later; revisit each when all three
-  toolchains support it.
+- Does not decide whether to move to C++26 later; revisit when all three compilers support the
+  features the project would use.

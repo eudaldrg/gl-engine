@@ -36,7 +36,7 @@ cover two vendors and two tiers.
   - renderer / app boundary: what the host provides (context, proc-address function, target
     framebuffer, size, input events)
   - render-test harness: offscreen context, image comparison tolerance across llvmpipe and NVIDIA
-- **Design status:** not started
+- **Design status:** ready (`design/m1-base.md`)
 
 ## M2: Point-cloud viewer (MVP end)
 

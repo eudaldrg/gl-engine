@@ -40,9 +40,6 @@ neither has to bend to fit the renderer.
 
 ## Consequences
 
-- Three targets: `renderer` (GL only, no windowing dependency), `viewer` (cameras, input mapping,
-  ImGui panels), and `apps/demo` (GLFW). The ImGui OpenGL backend belongs to `viewer`, and the ImGui
-  GLFW backend only to the demo.
 - No code in `renderer` binds framebuffer 0 or queries a window size; it uses the target it is given.
 - Does not decide the shape of the per-frame API (one `render(target, scene, camera)` call or
   explicit passes); that is in the design doc.

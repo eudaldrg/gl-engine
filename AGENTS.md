@@ -18,7 +18,7 @@ The repo history is part of the showcase: design, then tickets, then reviewed PR
 
 ## Hard rules
 
-- **Nothing vendored.** Dependencies come through CPM.cmake or FetchContent at pinned versions.
+- **Nothing vendored.** Dependencies come through CMake FetchContent at pinned versions.
 - **No code from the author's UOC coursework.** Reimplement the ideas; don't port the code.
 - **Public history is for any reader, not a channel to Eudald.** Commit messages, PR titles and
   bodies, review replies, issues and docs say what changed and why, nothing else. No notes
