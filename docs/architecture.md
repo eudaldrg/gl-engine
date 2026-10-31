@@ -8,13 +8,14 @@ reverse.
 
 | Component | Responsibility | From |
 |---|---|---|
+| `base` | Shared foundations with no GL: `Error`, logging, file watching. | M1 |
 | `renderer` | Turn GPU-resident scene data and a camera into pixels in a target framebuffer. | M1 |
 | `assets` | Parse files on disk into plain CPU data (PLY, later glTF and images). No GL. | M2 |
 | `viewer` | Interactive behaviour, host-neutral: cameras, input mapping, ImGui panels, frame stats. | M1 |
 | `apps/demo` | GLFW host: window, context, main loop, GLFW events translated to `viewer` events. | M1 |
 | `tests/render` | Offscreen host: renders into an FBO and compares against golden images. | M1 |
 
-`renderer` and `viewer` are libraries; the two hosts are executables. `assets` has no GL dependency,
+`base`, `renderer` and `viewer` are libraries; the two hosts are executables. `assets` has no GL dependency,
 so its parsers are tested without a context.
 
 ## Data flow
@@ -99,13 +100,13 @@ non-goals.
 | 4 | GL loader: glad2 generated at configure time; pre-generated folder as fallback | design doc | M1 | 3 | |
 | 5 | Unit-test framework: GoogleTest | design doc | M1 | | |
 | 6 | Per-frame renderer API: retained scene, one `render(target, view)` call | design doc | M1 | 3 | |
-| 7 | Shader hot reload: poll file times or OS file watch | open | M1 | | |
+| 7 | File watching for hot reload: polled `FileWatcher` in `base`, shared by shaders and later scripts | design doc | M1 | | |
 | 8 | Render-test harness: offscreen context, image tolerance across llvmpipe/NVIDIA/AMD | open | M1 | 3 | |
-| 9 | What `Error` contains | design doc | M1 | 2 | |
-| 10 | GL object ownership: RAII handle design | open | M1 | 2 | |
+| 9 | What `Error` contains: one type (code, message, source location) | design doc | M1 | 2 | |
+| 10 | GL object ownership: move-only `GlHandle<Tag>` | design doc | M1 | 2 | |
 | 11 | Dependency fetching: FetchContent at pinned tags | design doc | M1 | | |
 | 12 | Math library: glm | design doc | M1 | | |
-| 13 | Logging | open | M1 | 2 | |
+| 13 | Logging: own logger, runtime level, optional compile-time floor | design doc | M1 | 2 | |
 | 14 | PLY parser: write one or use a library | open | M2 | 2 | |
 | 15 | GPU layout and upload path for large point clouds | open | M2 | 6 | |
 | 16 | Sample dataset, its licence, and how it is fetched | open | M2 | | |
