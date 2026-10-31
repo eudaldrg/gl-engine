@@ -190,7 +190,8 @@ function(add_project_test name)
                  "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/with_memory_cap.py")
   endif()
   # PRE_TEST: discover when ctest runs, not at build time, so a build never executes a test binary.
-  gtest_discover_tests(${name} DISCOVERY_MODE PRE_TEST)
+  # TEST_PREFIX: ctest names start with the binary, so `ctest -R <library>` selects one library.
+  gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST)
   set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS ${name})
 endfunction()
 

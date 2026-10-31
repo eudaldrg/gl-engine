@@ -9,4 +9,9 @@ include(cmake/ProjectSettings.cmake)
 #   add_project_executable(<name> <sources...>)
 #   add_project_test(<name> <sources...>)   # GoogleTest, registered with ctest
 
+add_subdirectory(src/base)
+
 add_project_test(smoke_test tests/smoke_test.cpp)
+if(BUILD_TESTING)
+  add_subdirectory(tests/base)
+endif()
