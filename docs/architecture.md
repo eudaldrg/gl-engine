@@ -101,7 +101,7 @@ non-goals.
 | 5 | Unit-test framework: GoogleTest | design doc | M1 | | |
 | 6 | Per-frame renderer API: retained scene, one `render(target, view)` call | design doc | M1 | 3 | |
 | 7 | File watching for hot reload: polled `FileWatcher` in `base`, shared by shaders and later scripts | design doc | M1 | | |
-| 8 | Render-test harness: offscreen context, image tolerance across llvmpipe/NVIDIA/AMD | open | M1 | 3 | |
+| 8 | Render-test harness: hidden GLFW window (Xvfb on CI), llvmpipe goldens, per-device tolerance | design doc | M1 | 3 | |
 | 9 | What `Error` contains: one type (code, message, source location) | design doc | M1 | 2 | |
 | 10 | GL object ownership: move-only `GlHandle<Tag>` | design doc | M1 | 2 | |
 | 11 | Dependency fetching: FetchContent at pinned tags | design doc | M1 | | |

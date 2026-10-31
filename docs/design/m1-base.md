@@ -1,6 +1,6 @@
 # M1: Base
 
-- Design status: in progress
+- Design status: ready
 
 ## Goal and exit test
 
@@ -174,7 +174,7 @@ using InputEvent = std::variant<MouseMove, MouseButton, Scroll, Key, Resize>;
 - ADR 0002: `std::expected` for handleable failures, abort on broken invariants, no throwing.
 - ADR 0003: the host owns the window, context and loop.
 - Design doc choices, architecture register: glad2 (row 4), GoogleTest (5), retained scene with one
-  `render` call (6), polled `FileWatcher` (7), single `Error` type (9), `GlHandle<Tag>` (10),
+  `render` call (6), polled `FileWatcher` (7), render-test harness (8), single `Error` type (9), `GlHandle<Tag>` (10),
   FetchContent (11), glm (12), own logger (13).
 - Sanitizers: the `asan-ubsan` preset on Linux and in CI; an `asan` preset on Windows
   (`/fsanitize=address`, MSVC has no UBSan), run by hand.
@@ -185,6 +185,17 @@ using InputEvent = std::variant<MouseMove, MouseButton, Scroll, Key, Resize>;
   FBOs with colour, depth and integer attachments without changing their API.
 - Scripting, if it comes, binds to `FileWatcher` and to `viewer`, never to `renderer` internals.
 
+## Render tests
+
+- **Context:** the harness is a GLFW host with a hidden window, rendering into its own FBO, never
+  framebuffer 0. On Linux CI it runs under `xvfb-run` with Mesa llvmpipe; locally it uses the GPU.
+- **Cases:** fixed scene, fixed camera, 256×256, no MSAA. One golden PNG per case under
+  `tests/render/golden/`, generated on llvmpipe.
+- **Comparison (provisional, retune after the first hardware runs):** on llvmpipe, every channel
+  within 2/255; on hardware, at most 0.5 % of pixels differ by more than 8/255.
+- **On failure:** the actual image and a diff image are written to the build directory.
+- **Updating:** `--update-golden` rewrites the goldens; the PR diff shows the image changes.
+
 ## Open questions
 
-- **blocking** Render-test harness: offscreen context on CI, and image tolerance (row 8).
+None blocking.
