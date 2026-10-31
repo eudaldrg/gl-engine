@@ -40,6 +40,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glm glfw)
 
+# Plain x, y, z, w members instead of unions aliasing them as r, g, b, a and s, t, p, q: reading
+# an alias of the member last written is undefined behaviour in C++, and every access through a
+# union trips cppcoreguidelines-pro-type-union-access.
+target_compile_definitions(glm INTERFACE GLM_FORCE_XYZW_ONLY)
+
 # Consumers get glad's GL declarations, never GLFW's own GL header.
 target_compile_definitions(glfw INTERFACE GLFW_INCLUDE_NONE)
 

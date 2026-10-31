@@ -211,7 +211,7 @@ base::Result<Renderer> Renderer::Create(GlLoader loader, RendererConfig config) 
 void Renderer::Render(const RenderTarget& target, const View& view) {
     glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer);
     glViewport(0, 0, target.width, target.height);
-    glClearColor(kClearColor.r, kClearColor.g, kClearColor.b, 1.0F);
+    glClearColor(kClearColor.x, kClearColor.y, kClearColor.z, 1.0F);
     glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -234,7 +234,8 @@ void Renderer::Render(const RenderTarget& target, const View& view) {
     glBindVertexArray(lines_.Get());
     if (view.show_grid) {
         // The x and z axes lie on grid lines, and the depths of two overlapping lines differ by
-        // rounding. The grid writes no depth, so the axes drawn after it always win.
+        // rounding. The grid writes no depth, so the axes drawn after it always win. Anything else
+        // drawn after the grid would also ignore it, even from behind: scene geometry goes first.
         glDepthMask(GL_FALSE);
         glDrawArrays(GL_LINES, axes_vertex_count_, grid_vertex_count_);
         glDepthMask(GL_TRUE);
