@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
-project(gl_engine LANGUAGES CXX)
+# C: glad's generated loader and GLFW are C.
+project(gl_engine LANGUAGES C CXX)
 
 # Compiler floor, warnings, sanitizers, GoogleTest and the add_project_* helpers.
 include(cmake/ProjectSettings.cmake)
+# Pinned third-party libraries: glm, glad2, GLFW, Dear ImGui, stb.
+include(cmake/Dependencies.cmake)
 
 # Add targets with the helpers so none can forget the shared options and warnings:
 #   add_project_library(<name> STATIC <sources...>)

@@ -8,3 +8,6 @@ CMakeUserPresets.json
 .idea/
 *.rdc
 imgui.ini
+
+# Pre-generated glad2 loader, the fallback when Python/jinja2 are unavailable (README).
+third_party/glad-generated/
