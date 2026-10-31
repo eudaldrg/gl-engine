@@ -179,19 +179,31 @@ function(add_project_executable name)
   target_link_libraries(${name} PRIVATE project_options project_warnings)
 endfunction()
 
+# add_project_test(<name> <sources...> [NO_GTEST_MAIN] [LABELS <label...>])
+#   NO_GTEST_MAIN: the test provides its own main(), e.g. to parse extra flags.
+#   LABELS: ctest labels for every discovered test, so `ctest -L <label>` selects them.
 function(add_project_test name)
   if(NOT BUILD_TESTING)
     return()
   endif()
-  add_executable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE project_options project_warnings GTest::gtest_main)
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_GTEST_MAIN" "" "LABELS")
+  add_executable(${name} ${ARG_UNPARSED_ARGUMENTS})
+  if(ARG_NO_GTEST_MAIN)
+    target_link_libraries(${name} PRIVATE project_options project_warnings GTest::gtest)
+  else()
+    target_link_libraries(${name} PRIVATE project_options project_warnings GTest::gtest_main)
+  endif()
   if(ENABLE_TEST_MEMORY_CAP)
     set_property(TARGET ${name} PROPERTY TEST_LAUNCHER
                  "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/with_memory_cap.py")
   endif()
   # PRE_TEST: discover when ctest runs, not at build time, so a build never executes a test binary.
   # TEST_PREFIX: ctest names start with the binary, so `ctest -R <library>` selects one library.
-  gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST)
+  set(_properties "")
+  if(ARG_LABELS)
+    set(_properties PROPERTIES LABELS "${ARG_LABELS}")
+  endif()
+  gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST ${_properties})
   set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS ${name})
 endfunction()
 

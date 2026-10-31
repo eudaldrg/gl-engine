@@ -70,14 +70,20 @@ Level LevelFor(GLenum severity) {
     }
 }
 
-void GLAD_API_PTR OnDebugMessage(GLenum /*source*/, GLenum type, GLuint id, GLenum severity,
+void GLAD_API_PTR OnDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity,
                                  GLsizei length, const GLchar* message, const void* /*user*/) {
     const std::string_view text = length >= 0
                                       ? std::string_view{message, static_cast<std::size_t>(length)}
                                       : std::string_view{message};
+    // Compile and link failures come back from ReloadShader as an Error with the same log; some
+    // drivers also report them here as errors, which must not count as a broken invariant.
+    if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
+        base::Log(Level::kDebug, "GL [{}] {}", id, text);
+        return;
+    }
     base::Log(LevelFor(severity), "GL [{}] {}", id, text);
 #ifndef NDEBUG
-    // A GL error is a broken invariant in our code: stop where it happened (ADR 0002).
+    // A GL API error is a broken invariant in our code: stop where it happened (ADR 0002).
     if (type == GL_DEBUG_TYPE_ERROR) {
         std::abort();
     }
@@ -230,18 +236,19 @@ void Renderer::Render(const RenderTarget& target, const View& view) {
     DrawMesh(cube_, kCubeModel, kCubeColor);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // The x and z axes lie on grid lines; drawn second with LEQUAL, the axes win the depth tie.
     glUseProgram(ProgramFor(ProgramId::kLine));
     glUniformMatrix4fv(kLineViewProjection, 1, GL_FALSE, glm::value_ptr(view_projection));
     glBindVertexArray(lines_.Get());
-    glDepthFunc(GL_LEQUAL);
     if (view.show_grid) {
+        // The x and z axes lie on grid lines, and the depths of two overlapping lines differ by
+        // rounding. The grid writes no depth, so the axes drawn after it always win.
+        glDepthMask(GL_FALSE);
         glDrawArrays(GL_LINES, axes_vertex_count_, grid_vertex_count_);
+        glDepthMask(GL_TRUE);
     }
     if (view.show_axes) {
         glDrawArrays(GL_LINES, 0, axes_vertex_count_);
     }
-    glDepthFunc(GL_LESS);
 
     glBindVertexArray(0);
     glUseProgram(0);
