@@ -1,5 +1,6 @@
 add_project_library(gl_engine_renderer STATIC
   gl_handle.cpp
+  mesh.cpp
   renderer.cpp
   shader.cpp
 )

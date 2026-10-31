@@ -37,7 +37,7 @@ struct RenderTarget {
 struct View {
     glm::mat4 view{1.0F};
     glm::mat4 projection{1.0F};
-    glm::vec3 light_direction{0.0F, -1.0F, 0.0F};  // direction the light travels, world space
+    glm::vec3 light_direction{-0.4F, -1.0F, -0.6F};  // direction the light travels, world space
     bool wireframe = false;
     bool show_grid = true;
     bool show_axes = true;
@@ -62,7 +62,7 @@ class Renderer {
     [[nodiscard]] base::Result<void> ReloadShader(const std::filesystem::path& path);
 
   private:
-    enum class ProgramId : std::uint8_t { kLine, kCount };
+    enum class ProgramId : std::uint8_t { kMesh, kLine, kCount };
     static constexpr auto kProgramCount = static_cast<std::size_t>(ProgramId::kCount);
 
     struct ShaderProgram {
@@ -71,11 +71,27 @@ class Renderer {
         Program program;
     };
 
+    struct GpuMesh {
+        VertexArray vertex_array;
+        Buffer vertices;
+        Buffer indices;
+        GLsizei index_count = 0;
+    };
+
     Renderer() = default;
-    Program& ProgramFor(ProgramId program_id);
+    GLuint ProgramFor(ProgramId program_id) const;
+    void DrawMesh(const GpuMesh& mesh, const glm::mat4& model, const glm::vec3& color) const;
 
     std::array<ShaderProgram, kProgramCount> programs_;
     std::vector<std::filesystem::path> shader_files_;
+
+    GpuMesh sphere_;
+    GpuMesh cube_;
+    // Debug lines: the axes first, then the grid.
+    VertexArray lines_;
+    Buffer line_vertices_;
+    GLsizei axes_vertex_count_ = 0;
+    GLsizei grid_vertex_count_ = 0;
 };
 
 }  // namespace gl_engine::renderer
