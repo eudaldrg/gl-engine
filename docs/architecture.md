@@ -98,7 +98,7 @@ non-goals.
 | 3 | Renderer / host boundary | proposed | M1 | | 0003 |
 | 4 | GL loader: glad2 generated at configure time; pre-generated folder as fallback | design doc | M1 | 3 | |
 | 5 | Unit-test framework: GoogleTest | design doc | M1 | | |
-| 6 | Per-frame renderer API: one call or explicit passes | open | M1 | 3 | |
+| 6 | Per-frame renderer API: retained scene, one `render(target, view)` call | design doc | M1 | 3 | |
 | 7 | Shader hot reload: poll file times or OS file watch | open | M1 | | |
 | 8 | Render-test harness: offscreen context, image tolerance across llvmpipe/NVIDIA/AMD | open | M1 | 3 | |
 | 9 | What `Error` contains | design doc | M1 | 2 | |

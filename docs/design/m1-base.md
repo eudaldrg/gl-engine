@@ -59,6 +59,9 @@ render test (pass, fail with diff image).
 - ADR 0001: C++23, GCC 14 / Clang 18 / MSVC 17.8.
 - ADR 0002: `std::expected` for handleable failures, abort on broken invariants, no throwing.
 - ADR 0003: the host owns the window, context and loop.
+- Per-frame API (register row 6): retained scene plus one call per frame,
+  `render(target, view)`. Passes are internal to `renderer`; queries such as picking are separate
+  calls.
 - Design doc choices: glad2 at configure time, FetchContent, GoogleTest, glm (architecture register
   rows 4, 5, 11, 12).
 
@@ -69,7 +72,6 @@ render test (pass, fail with diff image).
 
 ## Open questions
 
-- **blocking** Per-frame renderer API: one call or explicit passes (register row 6).
 - **blocking** RAII handle design for GL objects (row 10).
 - **blocking** Shader hot reload: polling or OS file watch (row 7).
 - **blocking** Render-test harness: how the offscreen context is created on CI, and the image
