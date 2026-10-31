@@ -1,0 +1,117 @@
+# ==========================================================================
+#  GENERATED FILE - do not edit by hand.
+#  Edit this project's .claude/workflows.json (cpp.repo, git), then run
+#  /core:setup-cpp-repo (wf_cpp_repo.py generate --apply) to regenerate.
+# ==========================================================================
+# wf-template:         cpp-repo/2
+# wf-source:           wf_cpp_repo.py github-ci
+# wf-config-sha256:    725537f90d6bc09b52e491fb9ec405e7fac12ae4145f9f7d60e4b9927ac14123
+# wf-generated-sha256: 86a70e1b843d377b1122b1692a63a6fc702c2da9f8974e831d9a03e93b0ee37c
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    # The commit-stage hooks. `build` is skipped: the test job builds the same preset.
+    name: lint
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-18
+      CXX: clang++-18
+      SKIP: build
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja pre-commit jinja2
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y clang-18 libstdc++-14-dev && sudo apt-get install -y cppcheck libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: cmake --preset debug && pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    # Build and run the tests on every compiler, each pinned at or above the floor.
+    name: test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-14
+            os: ubuntu-24.04
+            cc: gcc-14
+            cxx: g++-14
+            install: "sudo apt-get update && sudo apt-get install -y g++-14"
+          - name: clang-18
+            os: ubuntu-24.04
+            cc: clang-18
+            cxx: clang++-18
+            install: "sudo apt-get update && sudo apt-get install -y clang-18 libstdc++-14-dev"
+          - name: msvc
+            os: windows-2022
+            cc: cl
+            cxx: cl
+            install: "echo using the runner MSVC"
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja jinja2
+      - name: Install compiler
+        if: runner.os == 'Linux'
+        run: ${{ matrix.install }}
+      - name: Install packages
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
+      - name: MSVC developer environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - run: cmake --preset debug
+      - run: cmake --build --preset debug
+      - if: runner.os == 'Linux'
+        run: xvfb-run -a ctest --preset debug
+      - if: runner.os != 'Linux'
+        run: ctest --preset debug
+
+  sanitizers:
+    # The push-stage hook: every test under asan-ubsan.
+    name: sanitizers
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-18
+      CXX: clang++-18
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja pre-commit jinja2
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y clang-18 libstdc++-14-dev && sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: xvfb-run -a pre-commit run --all-files --hook-stage pre-push

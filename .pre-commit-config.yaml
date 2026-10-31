@@ -1,0 +1,57 @@
+# ==========================================================================
+#  GENERATED FILE - do not edit by hand.
+#  Edit this project's .claude/workflows.json (cpp.repo, git), then run
+#  /core:setup-cpp-repo (wf_cpp_repo.py generate --apply) to regenerate.
+# ==========================================================================
+# wf-template:         cpp-repo/2
+# wf-source:           wf_cpp_repo.py precommit
+# wf-config-sha256:    725537f90d6bc09b52e491fb9ec405e7fac12ae4145f9f7d60e4b9927ac14123
+# wf-generated-sha256: 7616b1a6b4a3e667c0b7384556265da8ae6dd02ef096a394d45102bcedb9ff0b
+default_stages: [pre-commit]
+# Install both stages once per clone:
+#   pre-commit install && pre-commit install --hook-type pre-push
+# clang-tidy and cppcheck read build/debug/compile_commands.json: run `cmake --preset debug`
+# once first. docs/tasks/testing.md has what each hook is for.
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+
+  - repo: local
+    hooks:
+      - id: clang-tidy
+        name: clang-tidy
+        # -Wno-unknown-warning-option: build/debug may be configured with GCC, whose
+        # warning flags clang-tidy does not know.
+        entry: clang-tidy -p build/debug --quiet --extra-arg=-Wno-unknown-warning-option
+        language: python
+        additional_dependencies: ['clang-tidy==21.1.6']
+        types_or: [c++, c]
+
+      - id: cppcheck
+        name: cppcheck
+        # --language=c++: otherwise every .h is parsed as C. --library=googletest teaches
+        # it the TEST macros.
+        entry: >-
+          cppcheck --language=c++ --library=googletest
+          --enable=warning,performance,portability --error-exitcode=1 --inline-suppr
+          --suppress=missingInclude --suppress=missingIncludeSystem
+        language: system
+        types_or: [c++, c]
+
+      - id: build
+        name: incremental build (build/debug must compile)
+        entry: python scripts/check_build.py
+        language: python
+        pass_filenames: false
+        always_run: true
+
+      - id: sanitizers
+        name: test suite under sanitizers (asan-ubsan)
+        entry: python scripts/run_sanitizers.py --variant asan-ubsan
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
