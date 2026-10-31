@@ -1,6 +1,6 @@
 ---
 aliases: [testing, tests, ctest, sanitizers, asan, tsan, quality gates, pre-commit, pre-push, ci]
-sources: [.pre-commit-config.yaml, scripts/check_build.py, scripts/run_sanitizers.py, cmake/ProjectSettings.cmake]
+sources: [.pre-commit-config.yaml, scripts/check_build.py, scripts/run_sanitizers.py, cmake/ProjectSettings.cmake, apps/demo/CMakeLists.txt]
 ---
 
 # Testing
@@ -68,3 +68,18 @@ that allocates without bound fails on its own instead of getting the whole termi
 OOM-killed. `TEST_MEMORY_MAX=2G` changes the cap, `0` turns it off. Without a systemd user session
 the test runs uncapped and the launcher says so once. A test killed by the cap fails with exit 137
 and no gtest output.
+
+## Update (2026-10-31): labels, GL tests and a display
+
+`add_project_test(<name> <sources...> [NO_GTEST_MAIN] [LABELS <label...>])`. `NO_GTEST_MAIN` is for
+a test with its own `main()` (`render_tests` parses `--update-golden`); `LABELS` applies to every
+discovered test. Two labels exist: `render` (golden-image tests) and `demo` (`gl_demo --frames 3`).
+Both need a display, so on a headless machine run `ctest` and the pre-push stage under
+`LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a`, as CI does. `docs/tasks/render-tests.md` has the details.
+
+A target that is not a test but is run by one (the demo) joins `project_tests` with
+`set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS <target>)`, so the sanitizer run builds it.
+
+The C dependencies (GLFW, glad) are kept out of `compile_commands.json`. clang-tidy checks a header
+with the compile command of the most similarly named file there, and `input.h` was being parsed as C
+with the command of GLFW's `input.c`.
