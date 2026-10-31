@@ -14,10 +14,12 @@ include(cmake/Dependencies.cmake)
 
 add_subdirectory(src/base)
 add_subdirectory(src/renderer)
+add_subdirectory(src/viewer)
 
 add_project_test(smoke_test tests/smoke_test.cpp)
 if(BUILD_TESTING)
   add_subdirectory(tests/base)
   add_subdirectory(tests/renderer)
   add_subdirectory(tests/render)
+  add_subdirectory(tests/viewer)
 endif()

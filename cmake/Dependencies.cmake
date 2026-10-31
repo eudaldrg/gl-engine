@@ -103,6 +103,11 @@ else()
     INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_glad_includes}")
 endif()
 
+# Keep the C dependencies out of compile_commands.json. clang-tidy checks a header by borrowing
+# the compile command of the most similarly named file, and a header such as input.h would
+# otherwise get GLFW's input.c command and be parsed as C.
+set_target_properties(glfw glad_gl_core_45 PROPERTIES EXPORT_COMPILE_COMMANDS OFF)
+
 # ---------------------------------------------------------------------------- Dear ImGui
 # ImGui ships no CMake build; the two targets are defined here. The OpenGL3 backend brings its own
 # small GL loader, so imgui_core does not depend on glad.
