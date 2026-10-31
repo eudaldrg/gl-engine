@@ -44,7 +44,7 @@ Everything runs on the host's GL thread until a decision says otherwise (registe
 These are what other components depend on, and so the expensive things to change.
 
 - **Host to renderer.** Created once with the host's GL function loader
-  (`void* (*)(const char*)`); fails with an `Error` if the context is not GL 4.5 core. Each frame it
+  (`GlProc (*)(const char*)`, `GlProc` being `void (*)()`); fails with an `Error` if the context is not GL 4.5 core. Each frame it
   takes a `RenderTarget {framebuffer id, width, height}` plus frame parameters (camera matrices,
   display settings). Every GL object is destroyed while the context is current: the host destroys
   the `Renderer` before the context.

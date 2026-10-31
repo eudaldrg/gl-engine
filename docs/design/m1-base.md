@@ -122,7 +122,8 @@ before the context.
 ### `renderer`: host contract
 
 ```cpp
-using GlLoader = void* (*)(const char*);
+using GlProc = void (*)();
+using GlLoader = GlProc (*)(const char*);
 
 struct RenderTarget { GLuint framebuffer; int width; int height; };
 

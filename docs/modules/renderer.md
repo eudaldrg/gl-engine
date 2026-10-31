@@ -12,8 +12,9 @@ context or loop (ADR 0003).
 ## Host contract
 
 - `Renderer::Create(loader, {shader_dir})` needs a current GL 4.5 core context. `GlLoader` is
-  `GlProc (*)(const char*)`, the signature of `glfwGetProcAddress` and of glad's loader, so a host
-  passes its loader without a cast. Older or compatibility contexts return `ErrorCode::kUnsupported`;
+  `GlProc (*)(const char*)`, with `GlProc` a plain `void (*)()`. That is what glad takes and what
+  GLFW, SDL3, EGL and GLX return, so those hosts pass their loader directly; one returning `void*`
+  (SDL2) or a member function (Qt) wraps it in a lambda without captures. Older or compatibility contexts return `ErrorCode::kUnsupported`;
   a shader that fails to build at start-up returns its compile log.
 - `Render(target, view)` binds `target.framebuffer`, sets the viewport from the target and draws.
   It never picks a framebuffer on its own; the host decides, including framebuffer 0.
@@ -50,8 +51,12 @@ expected failures that `ReloadShader` already returns.
 An icosphere (subdivision 3) and a cube resting on a ground grid on y = 0, either side of the x, y and
 z axes in red, green and blue; Blinn-Phong under one directional light. Meshes are generated on the
 CPU (`mesh.h`) and unit-tested for counts, unit normals and outward winding. The grid writes no depth:
-the x and z axes lie exactly on grid lines, and two overlapping lines interpolate depth with
-different rounding, so without that the axes come out dashed.
+the x and z axes lie exactly on grid lines, and two overlapping lines with different endpoints can
+interpolate slightly different depths for the same pixel, so under `GL_LESS` an axis drawn after a
+grid that wrote depth could lose pixels to it. With the grid's depth writes off, it is still hidden
+by the meshes but never hides the axes. The cost is an ordering rule: anything drawn after the grid
+ignores it, so geometry under the floor would draw over it. Scene geometry is drawn before the grid,
+and only the axes after it.
 
 The golden images in `tests/render/golden/` depend on every constant here: camera, colours, layout,
 light. Changing any of them means regenerating the goldens (`docs/tasks/render-tests.md`).
