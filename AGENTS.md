@@ -4,7 +4,7 @@ Agent instructions for this repo. `CLAUDE.md` is a symlink to this file; edit `A
 
 ## What this is
 
-A public, MIT-licensed real-time 3D engine in C++20 and OpenGL 4.5 core.
+A public, MIT-licensed real-time 3D engine in C++23 and OpenGL 4.5 core.
 `docs/roadmap.md` holds the goals, milestones and non-goals.
 
 ## How work is split
