@@ -4,7 +4,7 @@ Agent instructions for this repo. `CLAUDE.md` is a symlink to this file; edit `A
 
 ## What this is
 
-A public, MIT-licensed real-time 3D engine in C++20 and OpenGL 4.5 core, and a portfolio piece.
+A public, MIT-licensed real-time 3D engine in C++23 and OpenGL 4.5 core, and a portfolio piece.
 `docs/context.md` holds the goals, suggested stack, stages and non-goals.
 
 ## How work is split

@@ -14,7 +14,7 @@ That process is part of the showcase too. The repo should visibly show design â†
 
 ## Why (portfolio angle)
 
-- Eudald has 9 years of C++ in HFT: performance, Qt visualization tools, build speed. He's doing a UOC master's in game programming (2025â€“).
+- Eudald has 9 years of C++ in HFT: performance, Qt visualization tools, build speed. He's doing a UOC master's in game design (2025â€“).
 - The target he has in mind is **Cognex Girona**: 3D smart cameras and laser profilers. That team builds cross-platform C++ 3D visualization for point clouds and range images on Linux (C++20, NixOS, Valgrind), and has a legacy OpenGL 1/2 + wxWidgets stack to modernise.
 - A clean, cross-platform, modern-GL engine with a point-cloud viewer mode maps directly to that work.
 - It also keeps his graphics skills fresh in general.
@@ -33,7 +33,7 @@ That process is part of the showcase too. The repo should visibly show design â†
 
 ## Suggested stack (open to discussion)
 
-- **Language:** C++20.
+- **Language:** C++23 (ADR 0001).
 - **Build:** CMake â‰¥ 3.25 with `CMakePresets.json`, Ninja. Clang/GCC on Ubuntu, MSVC on Windows.
 - **Windowing/GL:** GLFW + glad2, **OpenGL 4.5 core with DSA**. Vulkan is a non-goal for now.
 - **Math:** glm. **Debug UI:** Dear ImGui, replacing AntTweakBar. **Images:** stb_image.
