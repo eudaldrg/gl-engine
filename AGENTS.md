@@ -18,6 +18,10 @@ A public, MIT-licensed real-time 3D engine in C++23 and OpenGL 4.5 core.
 
 - **Nothing vendored.** Dependencies come through CPM.cmake or FetchContent at pinned versions.
 - **Original code only.** Reimplement ideas from elsewhere; do not copy code into the repo.
+- **Public history is for any reader.** Commit messages, PR titles and
+  bodies, review replies, issues and docs say what changed and why, nothing else. No notes
+  addressed to the maintainer, no process asides (a retry, a mistake, a PR that merged early), no tool or
+  AI attribution.
 
 ## Docs
 
