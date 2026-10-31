@@ -18,7 +18,7 @@ base::Result<std::string> ReadFile(const std::filesystem::path& path) {
     return std::string{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
 }
 
-// The driver's info log, without the terminating NUL.
+// The driver's info log, without the terminating NUL or trailing line breaks.
 template <class GetIv, class GetLog>
 std::string InfoLog(GLuint id, GetIv get_iv, GetLog get_log) {
     GLint length = 0;
@@ -29,6 +29,9 @@ std::string InfoLog(GLuint id, GetIv get_iv, GetLog get_log) {
     std::string log(static_cast<std::size_t>(length), '\0');
     get_log(id, length, nullptr, log.data());
     log.resize(static_cast<std::size_t>(length) - 1);
+    while (!log.empty() && (log.back() == '\n' || log.back() == '\r')) {
+        log.pop_back();
+    }
     return log;
 }
 
