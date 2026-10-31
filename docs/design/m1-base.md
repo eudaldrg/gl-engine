@@ -25,6 +25,8 @@ A window that renders a lit test scene, with the tooling every later milestone u
   clang-format and clang-tidy, unit tests, CI on Linux and Windows. Hooks, CI and branch protection
   come from `core:setup-cpp-repo`.
 
+ImGui's `.ini` layout file is turned off.
+
 **Test scene:** three axes (x red, y green, z blue), a procedural icosphere and a cube, lit by one
 directional light with Blinn-Phong.
 
@@ -191,8 +193,9 @@ using InputEvent = std::variant<MouseMove, MouseButton, Scroll, Key, Resize>;
   framebuffer 0. On Linux CI it runs under `xvfb-run` with Mesa llvmpipe; locally it uses the GPU.
 - **Cases:** fixed scene, fixed camera, 256×256, no MSAA. One golden PNG per case under
   `tests/render/golden/`, generated on llvmpipe.
-- **Comparison (provisional, retune after the first hardware runs):** on llvmpipe, every channel
-  within 2/255; on hardware, at most 0.5 % of pixels differ by more than 8/255.
+- **Comparison:** thresholds are harness parameters. Defaults (provisional, retuned after the first
+  hardware runs): on llvmpipe, every channel within 2/255; on hardware, at most 0.5 % of pixels
+  differ by more than 8/255.
 - **On failure:** the actual image and a diff image are written to the build directory.
 - **Updating:** `--update-golden` rewrites the goldens; the PR diff shows the image changes.
 

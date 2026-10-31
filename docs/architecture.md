@@ -46,7 +46,8 @@ These are what other components depend on, and so the expensive things to change
 - **Host to renderer.** Created once with the host's GL function loader
   (`void* (*)(const char*)`); fails with an `Error` if the context is not GL 4.5 core. Each frame it
   takes a `RenderTarget {framebuffer id, width, height}` plus frame parameters (camera matrices,
-  display settings). The exact per-frame API is open (row 6).
+  display settings). Every GL object is destroyed while the context is current: the host destroys
+  the `Renderer` before the context.
 - **Host to viewer.** Host-neutral input events: mouse move, mouse button, scroll, key, resize.
   Each host maps its own events onto these; the viewer never includes GLFW or Qt.
 - **assets to renderer.** Plain structs of contiguous arrays, passed as `std::span`, structure of
@@ -58,9 +59,9 @@ These are what other components depend on, and so the expensive things to change
 
 ## Storage
 
-Nothing persists at run time. ImGui's `.ini` layout file is turned off. Sample datasets are downloaded
+Nothing persists at run time. Sample datasets are downloaded
 to a git-ignored cache directory by a fetch script, pinned by URL and SHA-256 (row 16). Golden images
-are the only test data in the repository.
+are the only test data in the repository, which keeps it small and free of third-party licences.
 
 ## Trust boundaries
 
@@ -74,16 +75,22 @@ credentials, network services or user accounts.
 Mechanical rules live in `.clang-format` and `.clang-tidy`, generated from the shared base rules
 (`core:sync-lint-rules`), not in prose. The patterns below are the ones a linter cannot enforce:
 
-- GL objects are owned by move-only RAII handles; there are no `Init`/`Destroy` pairs.
+- GL objects are owned by move-only RAII handles; there are no `Init`/`Destroy` pairs. Early
+  returns with `std::expected` then cannot leak or double-free.
 - No singletons or global mutable state. The host owns the top-level objects and passes references
-  down; if parameter lists grow, they are grouped in a context struct, not hidden in a global.
+  down; if parameter lists grow, they are grouped in a context struct, not hidden in a global. The
+  demo and the test harness each create their own `Renderer`, side by side.
 - Objects are held by value, or by `std::unique_ptr` when identity or polymorphism needs it. Raw
-  pointers never own.
-- Polymorphism only where there is more than one implementation.
-- Units and constants are `constexpr`; no macros except for platform detection.
+  pointers never own, so ownership is visible in the types.
+- Polymorphism only where there is more than one implementation; without a second one, the
+  indirection buys nothing.
+- Units and constants are `constexpr`; no macros except for platform detection. They are scoped and
+  typed.
 - Paths are `std::filesystem::path`; time is `std::chrono::steady_clock`, with no clamping of frame
-  deltas.
-- Functions returning `std::expected` are `[[nodiscard]]`.
+  deltas. A monotonic clock without a clamp cannot slow the simulation when the frame rate drops.
+- Functions returning `std::expected` are `[[nodiscard]]`, so ignoring an error is a compile warning.
+- Headers with `#pragma once`; C++20 modules are not used while CMake, clang-tidy and clangd
+  support for them is uneven.
 
 ## Out of scope
 
