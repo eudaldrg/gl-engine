@@ -20,6 +20,10 @@ The repo history is part of the showcase: design, then tickets, then reviewed PR
 
 - **Nothing vendored.** Dependencies come through CPM.cmake or FetchContent at pinned versions.
 - **No code from the author's UOC coursework.** Reimplement the ideas; don't port the code.
+- **Public history is for any reader, not a channel to Eudald.** Commit messages, PR titles and
+  bodies, review replies, issues and docs say what changed and why, nothing else. No notes
+  addressed to Eudald, no process asides (a retry, a mistake, a PR that merged early), no tool or
+  AI attribution. Anything meant for Eudald goes in the chat.
 
 ## Docs
 
