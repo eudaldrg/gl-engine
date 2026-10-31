@@ -38,7 +38,7 @@ That process is part of the showcase too. The repo should visibly show design â†
 - **Windowing/GL:** GLFW + glad2, **OpenGL 4.5 core with DSA**. Vulkan is a non-goal for now.
 - **Math:** glm. **Debug UI:** Dear ImGui, replacing AntTweakBar. **Images:** stb_image.
 - **Meshes:** glTF 2.0 via fastgltf or cgltf, **not FBX**: the FBX SDK is proprietary and painful on Linux.
-- **Dependencies:** CPM.cmake or FetchContent, pinned versions. Nothing vendored in the repo.
+- **Dependencies:** FetchContent, pinned versions. Nothing vendored in the repo.
 - **Quality:**
   - GitHub Actions matrix (ubuntu-latest + windows-latest)
   - ASan/UBSan preset, clang-tidy, clang-format

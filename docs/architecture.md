@@ -103,7 +103,7 @@ non-goals.
 | 8 | Render-test harness: offscreen context, image tolerance across llvmpipe/NVIDIA/AMD | open | M1 | 3 | |
 | 9 | What `Error` contains | design doc | M1 | 2 | |
 | 10 | GL object ownership: RAII handle design | open | M1 | 2 | |
-| 11 | Dependency fetching: CPM.cmake or FetchContent | open | M1 | | |
+| 11 | Dependency fetching: FetchContent at pinned tags | design doc | M1 | | |
 | 12 | Math library: glm | design doc | M1 | | |
 | 13 | Logging | open | M1 | 2 | |
 | 14 | PLY parser: write one or use a library | open | M2 | 2 | |
