@@ -207,6 +207,12 @@ function(add_project_test name)
   set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS ${name})
 endfunction()
 
+# A target a test runs that is not itself a test, e.g. an app under a smoke test. It is built with
+# `project_tests`, so the sanitizer run does not find it missing.
+function(add_to_project_tests target)
+  set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS ${target})
+endfunction()
+
 # `project_tests` builds every add_project_test() target; scripts/run_sanitizers.py builds only it.
 # Deferred to the end of the top-level directory so it sees tests added in any subdirectory.
 function(_project_define_tests_target)

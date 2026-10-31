@@ -5,8 +5,6 @@
 #include <glad/gl.h>
 
 #include <array>
-#include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -62,9 +60,6 @@ class Renderer {
     [[nodiscard]] base::Result<void> ReloadShader(const std::filesystem::path& path);
 
   private:
-    enum class ProgramId : std::uint8_t { kMesh, kLine, kCount };
-    static constexpr auto kProgramCount = static_cast<std::size_t>(ProgramId::kCount);
-
     struct ShaderProgram {
         std::filesystem::path vertex;
         std::filesystem::path fragment;
@@ -79,10 +74,14 @@ class Renderer {
     };
 
     Renderer() = default;
-    GLuint ProgramFor(ProgramId program_id) const;
+    // Every program, for loops that treat them alike. Built on demand: the Renderer moves.
+    std::array<ShaderProgram*, 2> Programs() {
+        return {&mesh_program_, &line_program_};
+    }
     void DrawMesh(const GpuMesh& mesh, const glm::mat4& model, const glm::vec3& color) const;
 
-    std::array<ShaderProgram, kProgramCount> programs_;
+    ShaderProgram mesh_program_;
+    ShaderProgram line_program_;
     std::vector<std::filesystem::path> shader_files_;
 
     GpuMesh sphere_;

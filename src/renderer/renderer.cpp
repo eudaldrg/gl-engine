@@ -1,6 +1,5 @@
 #include "gl_engine/renderer/renderer.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <format>
@@ -76,15 +75,12 @@ void GLAD_API_PTR OnDebugMessage(GLenum source, GLenum type, GLuint id, GLenum s
                                       ? std::string_view{message, static_cast<std::size_t>(length)}
                                       : std::string_view{message};
     // Compile and link failures come back from ReloadShader as an Error with the same log; some
-    // drivers also report them here as errors, which must not count as a broken invariant.
-    if (source == GL_DEBUG_SOURCE_SHADER_COMPILER) {
-        base::Log(Level::kDebug, "GL [{}] {}", id, text);
-        return;
-    }
-    base::Log(LevelFor(severity), "GL [{}] {}", id, text);
+    // drivers also report them here, so they are kept out of the log at its default level.
+    const bool from_compiler = source == GL_DEBUG_SOURCE_SHADER_COMPILER;
+    base::Log(from_compiler ? Level::kDebug : LevelFor(severity), "GL [{}] {}", id, text);
 #ifndef NDEBUG
     // A GL API error is a broken invariant in our code: stop where it happened (ADR 0002).
-    if (type == GL_DEBUG_TYPE_ERROR) {
+    if (source == GL_DEBUG_SOURCE_API && type == GL_DEBUG_TYPE_ERROR) {
         std::abort();
     }
 #else
@@ -173,22 +169,19 @@ base::Result<Renderer> Renderer::Create(GlLoader loader, RendererConfig config) 
 
     Renderer renderer;
     const std::filesystem::path& dir = config.shader_dir;
-    renderer.programs_[static_cast<std::size_t>(ProgramId::kMesh)] = {
+    renderer.mesh_program_ = {
         .vertex = dir / "mesh.vert", .fragment = dir / "mesh.frag", .program = {}};
-    renderer.programs_[static_cast<std::size_t>(ProgramId::kLine)] = {
+    renderer.line_program_ = {
         .vertex = dir / "line.vert", .fragment = dir / "line.frag", .program = {}};
 
-    for (ShaderProgram& entry : renderer.programs_) {
-        auto program = BuildProgram(entry.vertex, entry.fragment);
+    for (ShaderProgram* entry : renderer.Programs()) {
+        auto program = BuildProgram(entry->vertex, entry->fragment);
         if (!program) {
             return std::unexpected{std::move(program.error())};
         }
-        entry.program = std::move(*program);
-        for (const auto* path : {&entry.vertex, &entry.fragment}) {
-            if (std::ranges::find(renderer.shader_files_, *path) == renderer.shader_files_.end()) {
-                renderer.shader_files_.push_back(*path);
-            }
-        }
+        entry->program = std::move(*program);
+        renderer.shader_files_.push_back(entry->vertex);
+        renderer.shader_files_.push_back(entry->fragment);
     }
 
     const auto upload = [](const MeshData& mesh) {
@@ -227,7 +220,7 @@ void Renderer::Render(const RenderTarget& target, const View& view) {
     const glm::mat4 view_projection = view.projection * view.view;
     const glm::vec3 camera_position{glm::inverse(view.view)[3]};
 
-    glUseProgram(ProgramFor(ProgramId::kMesh));
+    glUseProgram(mesh_program_.program.Get());
     glUniformMatrix4fv(kMeshViewProjection, 1, GL_FALSE, glm::value_ptr(view_projection));
     glUniform3fv(kMeshCameraPosition, 1, glm::value_ptr(camera_position));
     glUniform3fv(kMeshLightDirection, 1, glm::value_ptr(view.light_direction));
@@ -236,7 +229,7 @@ void Renderer::Render(const RenderTarget& target, const View& view) {
     DrawMesh(cube_, kCubeModel, kCubeColor);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glUseProgram(ProgramFor(ProgramId::kLine));
+    glUseProgram(line_program_.program.Get());
     glUniformMatrix4fv(kLineViewProjection, 1, GL_FALSE, glm::value_ptr(view_projection));
     glBindVertexArray(lines_.Get());
     if (view.show_grid) {
@@ -264,15 +257,15 @@ void Renderer::DrawMesh(const GpuMesh& mesh, const glm::mat4& model, const glm::
 base::Result<void> Renderer::ReloadShader(const std::filesystem::path& path) {
     // Build everything first and swap only if all succeed, so a failure changes nothing.
     std::vector<std::pair<ShaderProgram*, Program>> rebuilt;
-    for (ShaderProgram& entry : programs_) {
-        if (entry.vertex != path && entry.fragment != path) {
+    for (ShaderProgram* entry : Programs()) {
+        if (entry->vertex != path && entry->fragment != path) {
             continue;
         }
-        auto program = BuildProgram(entry.vertex, entry.fragment);
+        auto program = BuildProgram(entry->vertex, entry->fragment);
         if (!program) {
             return std::unexpected{std::move(program.error())};
         }
-        rebuilt.emplace_back(&entry, std::move(*program));
+        rebuilt.emplace_back(entry, std::move(*program));
     }
     if (rebuilt.empty()) {
         return std::unexpected{Error{
@@ -283,10 +276,6 @@ base::Result<void> Renderer::ReloadShader(const std::filesystem::path& path) {
     }
     base::Log(Level::kInfo, "reloaded {}", path.string());
     return {};
-}
-
-GLuint Renderer::ProgramFor(ProgramId program_id) const {
-    return programs_[static_cast<std::size_t>(program_id)].program.Get();
 }
 
 }  // namespace gl_engine::renderer

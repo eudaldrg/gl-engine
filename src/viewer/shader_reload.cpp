@@ -6,17 +6,15 @@
 
 namespace gl_engine::viewer {
 
-std::vector<base::WatchId> WatchShaders(base::FileWatcher& watcher, renderer::Renderer& renderer) {
-    std::vector<base::WatchId> ids;
+void WatchShaders(base::FileWatcher& watcher, renderer::Renderer& renderer) {
     for (const std::filesystem::path& path : renderer.ShaderFiles()) {
-        ids.push_back(watcher.Watch(path, [&renderer](const std::filesystem::path& changed) {
+        watcher.Watch(path, [&renderer](const std::filesystem::path& changed) {
             if (auto reloaded = renderer.ReloadShader(changed); !reloaded) {
                 base::Log(base::Level::kError, "shader reload failed: {}",
                           base::ToString(reloaded.error()));
             }
-        }));
+        });
     }
-    return ids;
 }
 
 }  // namespace gl_engine::viewer

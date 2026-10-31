@@ -60,6 +60,6 @@ Mesa. Without Linux, take the actual images from a CI run.
 
 GLFW loads libX11 and libGL with `dlopen` and unloads them in `glfwTerminate`, before LeakSanitizer
 scans. Memory those libraries keep in globals then reports as leaked, with `<unknown module>`
-stacks. `link_glfw()` (`cmake/Dependencies.cmake`) links both libraries directly so they stay
-mapped. That is not a suppression: real leaks still fail. If a new GLFW host shows those stacks,
-link it with `link_glfw()`.
+stacks. In ASan builds on Linux the `glfw` target (`cmake/Dependencies.cmake`) also links both
+libraries directly, so every GLFW host keeps them mapped. That is not a suppression: real leaks
+still fail.

@@ -6,7 +6,6 @@
 #include <format>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -42,11 +41,6 @@ bool ImGuiWantsKeyboard() {
     return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard;
 }
 
-template <class Enum>
-constexpr auto Index(Enum value) {
-    return static_cast<std::size_t>(static_cast<std::underlying_type_t<Enum>>(value));
-}
-
 }  // namespace
 
 Viewer::Viewer(int width, int height)
@@ -63,7 +57,7 @@ void Viewer::HandleEvent(const InputEvent& event) {
                    [this](const MouseButton& button) {
                        // Releases always go through, so a drag that ends over the panel ends.
                        if (!button.pressed || !ImGuiWantsMouse()) {
-                           buttons_.at(Index(button.button)) = button.pressed;
+                           buttons_.at(std::to_underlying(button.button)) = button.pressed;
                        }
                    },
                    [this](const Scroll& scroll) {
@@ -94,8 +88,9 @@ void Viewer::OnMouseMove(glm::vec2 position) {
         return;
     }
     const glm::vec2 delta = position - *last;
-    const bool left = buttons_.at(Index(Button::kLeft));
-    const bool pan = buttons_.at(Index(Button::kRight)) || buttons_.at(Index(Button::kMiddle));
+    const bool left = buttons_.at(std::to_underlying(Button::kLeft));
+    const bool pan = buttons_.at(std::to_underlying(Button::kRight)) ||
+                     buttons_.at(std::to_underlying(Button::kMiddle));
     if (mode_ == CameraMode::kOrbit) {
         if (left) {
             orbit_.Rotate(delta.x * kRotateSpeed, -delta.y * kRotateSpeed);
@@ -112,7 +107,7 @@ void Viewer::OnKey(const Key& key) {
     if (key.pressed && ImGuiWantsKeyboard()) {
         return;
     }
-    keys_.at(Index(key.key)) = key.pressed;
+    keys_.at(std::to_underlying(key.key)) = key.pressed;
     if (key.key == KeyCode::kTab && key.pressed) {
         ToggleMode();
     }
@@ -135,7 +130,9 @@ void Viewer::Update(std::chrono::steady_clock::duration frame_time) {
     if (mode_ != CameraMode::kFly) {
         return;
     }
-    const auto held = [this](KeyCode key) { return keys_.at(Index(key)) ? 1.0F : 0.0F; };
+    const auto held = [this](KeyCode key) {
+        return keys_.at(std::to_underlying(key)) ? 1.0F : 0.0F;
+    };
     const glm::vec3 direction{held(KeyCode::kD) - held(KeyCode::kA),
                               held(KeyCode::kE) - held(KeyCode::kQ),
                               held(KeyCode::kW) - held(KeyCode::kS)};

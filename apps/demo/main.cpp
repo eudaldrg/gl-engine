@@ -199,7 +199,11 @@ int Run(GLFWwindow* window, const Options& options) {
 
         glfwGetFramebufferSize(window, &width, &height);
         if (width == 0 || height == 0) {
-            continue;  // minimised: nothing to draw into
+            // Minimised: nothing to draw, and no swap to wait on. Block until something happens,
+            // waking often enough for the watcher.
+            constexpr double kMinimisedWaitSeconds = 0.25;
+            glfwWaitEventsTimeout(kMinimisedWaitSeconds);
+            continue;
         }
         // The host owns the default framebuffer; the renderer draws wherever it is pointed.
         const gl_engine::renderer::RenderTarget target{

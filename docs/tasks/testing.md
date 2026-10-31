@@ -78,7 +78,7 @@ Both need a display, so on a headless machine run `ctest` and the pre-push stage
 `LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a`, as CI does. `docs/tasks/render-tests.md` has the details.
 
 A target that is not a test but is run by one (the demo) joins `project_tests` with
-`set_property(GLOBAL APPEND PROPERTY PROJECT_TEST_TARGETS <target>)`, so the sanitizer run builds it.
+`add_to_project_tests(<target>)`, so the sanitizer run builds it.
 
 The C dependencies (GLFW, glad) are kept out of `compile_commands.json`. clang-tidy checks a header
 with the compile command of the most similarly named file there, and `input.h` was being parsed as C
