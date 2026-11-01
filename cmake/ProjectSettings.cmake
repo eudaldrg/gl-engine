@@ -24,7 +24,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # code relies on, and the failure would otherwise show up as an obscure error deep in a header.
 
 set(PROJECT_GCC_FLOOR "14")
-set(PROJECT_CLANG_FLOOR "18")
+set(PROJECT_CLANG_FLOOR "19")
 set(PROJECT_MSVC_FLOOR "17.8")       # Visual Studio version
 set(PROJECT_MSVC_FLOOR_VERSION 1938)  # the matching MSVC_VERSION
 

@@ -12,7 +12,7 @@ cameras, an ImGui panel and shader hot reload. `docs/roadmap.md` has what comes 
 
 ## Requirements
 
-- CMake 3.28+, Ninja, and a C++23 compiler: GCC 14, Clang 18 or Visual Studio 2022 17.8, or newer.
+- CMake 3.28+, Ninja, and a C++23 compiler: GCC 14, Clang 19 or Visual Studio 2022 17.8, or newer.
 - Python 3 with `jinja2` (`pip install jinja2`): the OpenGL loader is generated at configure time.
 - A GPU and driver with OpenGL 4.5 core.
 - Linux only: the X11 and GL development packages. On Debian or Ubuntu:

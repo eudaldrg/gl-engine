@@ -173,7 +173,7 @@ using InputEvent = std::variant<MouseMove, MouseButton, Scroll, Key, Resize>;
 
 ## Decisions
 
-- ADR 0001: C++23, GCC 14 / Clang 18 / MSVC 17.8.
+- ADR 0001: C++23, GCC 14 / Clang 19 / MSVC 17.8.
 - ADR 0002: `std::expected` for handleable failures, abort on broken invariants, no throwing.
 - ADR 0003: the host owns the window, context and loop.
 - Design doc choices, architecture register: glad2 (row 4), GoogleTest (5), retained scene with one

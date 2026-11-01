@@ -5,7 +5,7 @@
 # ==========================================================================
 # wf-template:         cpp-repo/2
 # wf-source:           wf_cpp_repo.py precommit
-# wf-config-sha256:    725537f90d6bc09b52e491fb9ec405e7fac12ae4145f9f7d60e4b9927ac14123
+# wf-config-sha256:    e51c6df886e6c66ff5e3ef31ea8b458abe432033728d8fb8afa6fd5d944dca4f
 # wf-generated-sha256: 7616b1a6b4a3e667c0b7384556265da8ae6dd02ef096a394d45102bcedb9ff0b
 default_stages: [pre-commit]
 # Install both stages once per clone:
