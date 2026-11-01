@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <format>
 #include <memory>
+#include <span>
 
 namespace gl_engine::render_tests {
 
@@ -39,7 +40,8 @@ base::Result<Image> LoadPng(const std::filesystem::path& path) {
                         std::format("cannot read {}: {}", path.string(), stbi_failure_reason())}};
     }
     Image image{.width = width, .height = height, .rgba = {}};
-    image.rgba.assign(pixels.get(), pixels.get() + ByteCount(width, height));
+    const std::span<const unsigned char> bytes{pixels.get(), ByteCount(width, height)};
+    image.rgba.assign(bytes.begin(), bytes.end());
     return image;
 }
 
