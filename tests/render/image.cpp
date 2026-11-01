@@ -31,7 +31,7 @@ base::Result<Image> LoadPng(const std::filesystem::path& path) {
     int width = 0;
     int height = 0;
     int file_channels = 0;
-    const std::unique_ptr<stbi_uc, StbiFree> pixels{
+    const std::unique_ptr<unsigned char, StbiFree> pixels{
         stbi_load(path.string().c_str(), &width, &height, &file_channels, kChannels)};
     if (!pixels) {
         return std::unexpected{
