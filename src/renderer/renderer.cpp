@@ -138,15 +138,33 @@ std::vector<LineVertex> MakeAxes() {
             {kAxisLength * y, y}, {origin, z},          {kAxisLength * z, z}};
 }
 
+// The grid's x = 0 and z = 0 lines run under the x and z axes. Two lines on the same pixels get
+// slightly different depths from rounding and would hide each other in patches, so the grid never
+// overlaps the axes: the spans under them come first (kGridUnderAxesVertexCount vertices), and the
+// renderer draws those only while the axes are hidden.
+constexpr GLsizei kGridUnderAxesVertexCount = 4;
+
 std::vector<LineVertex> MakeGrid() {
-    std::vector<LineVertex> lines;
     const auto extent = static_cast<float>(kGridHalfExtent);
+    std::vector<LineVertex> lines = {{{0, 0, 0}, kGridColor},
+                                     {{kAxisLength, 0, 0}, kGridColor},
+                                     {{0, 0, 0}, kGridColor},
+                                     {{0, 0, kAxisLength}, kGridColor}};
+    auto add = [&lines](glm::vec3 from, glm::vec3 to) {
+        lines.push_back({from, kGridColor});
+        lines.push_back({to, kGridColor});
+    };
     for (int i = -kGridHalfExtent; i <= kGridHalfExtent; ++i) {
         const auto offset = static_cast<float>(i);
-        lines.push_back({{offset, 0, -extent}, kGridColor});
-        lines.push_back({{offset, 0, extent}, kGridColor});
-        lines.push_back({{-extent, 0, offset}, kGridColor});
-        lines.push_back({{extent, 0, offset}, kGridColor});
+        if (i == 0) {
+            add({0, 0, -extent}, {0, 0, 0});
+            add({0, 0, kAxisLength}, {0, 0, extent});
+            add({-extent, 0, 0}, {0, 0, 0});
+            add({kAxisLength, 0, 0}, {extent, 0, 0});
+        } else {
+            add({offset, 0, -extent}, {offset, 0, extent});
+            add({-extent, 0, offset}, {extent, 0, offset});
+        }
     }
     return lines;
 }
@@ -233,12 +251,8 @@ void Renderer::Render(const RenderTarget& target, const View& view) {
     glUniformMatrix4fv(kLineViewProjection, 1, GL_FALSE, glm::value_ptr(view_projection));
     glBindVertexArray(lines_.Get());
     if (view.show_grid) {
-        // The x and z axes lie on grid lines, and the depths of two overlapping lines differ by
-        // rounding. The grid writes no depth, so the axes drawn after it always win. Anything else
-        // drawn after the grid would also ignore it, even from behind: scene geometry goes first.
-        glDepthMask(GL_FALSE);
-        glDrawArrays(GL_LINES, axes_vertex_count_, grid_vertex_count_);
-        glDepthMask(GL_TRUE);
+        const GLsizei skipped = view.show_axes ? kGridUnderAxesVertexCount : 0;
+        glDrawArrays(GL_LINES, axes_vertex_count_ + skipped, grid_vertex_count_ - skipped);
     }
     if (view.show_axes) {
         glDrawArrays(GL_LINES, 0, axes_vertex_count_);

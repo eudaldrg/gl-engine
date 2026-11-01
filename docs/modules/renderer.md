@@ -50,13 +50,11 @@ expected failures that `ReloadShader` already returns.
 
 An icosphere (subdivision 3) and a cube resting on a ground grid on y = 0, either side of the x, y and
 z axes in red, green and blue; Blinn-Phong under one directional light. Meshes are generated on the
-CPU (`mesh.h`) and unit-tested for counts, unit normals and outward winding. The grid writes no depth:
-the x and z axes lie exactly on grid lines, and two overlapping lines with different endpoints can
-interpolate slightly different depths for the same pixel, so under `GL_LESS` an axis drawn after a
-grid that wrote depth could lose pixels to it. With the grid's depth writes off, it is still hidden
-by the meshes but never hides the axes. The cost is an ordering rule: anything drawn after the grid
-ignores it, so geometry under the floor would draw over it. Scene geometry is drawn before the grid,
-and only the axes after it.
+CPU (`mesh.h`) and unit-tested for counts, unit normals and outward winding. The grid never
+overlaps the axes: two lines on the same pixels get slightly different depths from rounding and hide
+each other in patches, so the grid's x = 0 and z = 0 lines leave out the spans the x and z axes
+cover and draw them only while the axes are hidden. Every line writes and tests depth normally, and
+draw order does not matter.
 
 The golden images in `tests/render/golden/` depend on every constant here: camera, colours, layout,
 light. Changing any of them means regenerating the goldens (`docs/tasks/render-tests.md`).
