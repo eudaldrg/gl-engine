@@ -3,10 +3,10 @@
 #  Edit this project's .claude/workflows.json (cpp.repo, git), then run
 #  /core:setup-cpp-repo (wf_cpp_repo.py generate --apply) to regenerate.
 # ==========================================================================
-# wf-template:         cpp-repo/2
+# wf-template:         cpp-repo/3
 # wf-source:           wf_cpp_repo.py precommit
-# wf-config-sha256:    e51c6df886e6c66ff5e3ef31ea8b458abe432033728d8fb8afa6fd5d944dca4f
-# wf-generated-sha256: 7616b1a6b4a3e667c0b7384556265da8ae6dd02ef096a394d45102bcedb9ff0b
+# wf-config-sha256:    aee45b814b2fdbb2277b44e86d3ddbfc5c4214bb31aaf13ad75e6735f5ef7c22
+# wf-generated-sha256: 788b2bd798406474653914df0e2ac806236260f9279ad10eaf02852e5063e698
 default_stages: [pre-commit]
 # Install both stages once per clone:
 #   pre-commit install && pre-commit install --hook-type pre-push
@@ -40,6 +40,16 @@ repos:
           --suppress=missingInclude --suppress=missingIncludeSystem
         language: system
         types_or: [c++, c]
+
+      - id: cppcheck-version
+        name: cppcheck is the pinned 2.19.0 (warns only)
+        # CI builds exactly this version; a different local one can disagree on findings.
+        entry: >-
+          python -c 'import subprocess; out = subprocess.run(["cppcheck", "--version"], capture_output=True, text=True).stdout.split(); found = out[-1] if out else "none"; found == "2.19.0" or print("warning: cppcheck " + found + " here, but CI pins 2.19.0: findings can differ. Install 2.19.0, or bump cpp.repo.tools.cppcheck.")'
+        language: python
+        pass_filenames: false
+        always_run: true
+        verbose: true
 
       - id: build
         name: incremental build (build/debug must compile)
