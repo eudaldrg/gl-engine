@@ -1,12 +1,9 @@
-# ==========================================================================
-#  GENERATED FILE - do not edit by hand.
-#  Edit this project's .claude/workflows.json (cpp.repo, git), then run
-#  /core:setup-cpp-repo (wf_cpp_repo.py generate --apply) to regenerate.
-# ==========================================================================
-# wf-template:         cpp-repo/2
-# wf-source:           wf_cpp_repo.py github-ci
-# wf-config-sha256:    e51c6df886e6c66ff5e3ef31ea8b458abe432033728d8fb8afa6fd5d944dca4f
-# wf-generated-sha256: 299619ee1e326132f0c7e8f93830761a3436ace292370404c211d3b73d070d8a
+# CI: the commit-stage hooks (lint), the push-stage hook (sanitizers), and a build and test on every
+# compiler in the matrix, each pinned at or above the floor in cmake/ProjectSettings.cmake.
+#
+# Speed: apt packages are cached by awalsh128/cache-apt-pkgs-action (keyed on the package list) and
+# compiled objects by ccache, so a run with a warm cache installs and rebuilds little. Lint checks
+# only the files a pull request changes; pushes to main and dev check every file.
 name: ci
 
 on:
@@ -21,6 +18,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  LIBGL_ALWAYS_SOFTWARE: "1"
+  # The X11 and GL headers GLFW builds against.
+  GL_DEV_PACKAGES: libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
+  # A virtual display and Mesa's software renderer, for the render and demo tests.
+  GL_RUN_PACKAGES: xvfb mesa-utils libgl1-mesa-dri
+
 jobs:
   lint:
     # The commit-stage hooks. `build` is skipped: the test job builds the same preset.
@@ -30,23 +34,33 @@ jobs:
       CC: clang-19
       CXX: clang++-19
       SKIP: build
-      LIBGL_ALWAYS_SOFTWARE: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the PR's base, to diff against
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install ninja pre-commit jinja2
-      - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang-19 libstdc++-14-dev && sudo apt-get install -y cppcheck libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: clang-19 libstdc++-14-dev cppcheck ${{ env.GL_DEV_PACKAGES }}
+          version: lint-1
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: cmake --preset debug && pre-commit run --all-files --show-diff-on-failure
+      - run: cmake --preset debug
+      - name: Hooks on the changed files
+        if: github.event_name == 'pull_request'
+        run: >-
+          pre-commit run --show-diff-on-failure
+          --from-ref origin/${{ github.base_ref }} --to-ref HEAD
+      - name: Hooks on every file
+        if: github.event_name != 'pull_request'
+        run: pre-commit run --all-files --show-diff-on-failure
 
   test:
-    # Build and run the tests on every compiler, each pinned at or above the floor.
     name: test (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,42 +71,49 @@ jobs:
             os: ubuntu-24.04
             cc: gcc-14
             cxx: g++-14
-            install: "sudo apt-get update && sudo apt-get install -y g++-14"
+            packages: g++-14
           - name: clang-19
             os: ubuntu-24.04
             cc: clang-19
             cxx: clang++-19
-            install: "sudo apt-get update && sudo apt-get install -y clang-19 libstdc++-14-dev"
+            packages: clang-19 libstdc++-14-dev
           - name: msvc
             os: windows-2022
             cc: cl
             cxx: cl
-            install: "echo using the runner MSVC"
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
-      LIBGL_ALWAYS_SOFTWARE: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install ninja jinja2
-      - name: Install compiler
-        if: runner.os == 'Linux'
-        run: ${{ matrix.install }}
-      - name: Install packages
-        if: runner.os == 'Linux'
-        run: sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
-      - name: MSVC developer environment
-        if: runner.os == 'Windows'
+      - if: runner.os == 'Linux'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: ${{ matrix.packages }} ${{ env.GL_DEV_PACKAGES }} ${{ env.GL_RUN_PACKAGES }}
+          version: test-${{ matrix.name }}-1
+      - if: runner.os == 'Linux'
+        uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: test-${{ matrix.name }}
+      - if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
-      - run: cmake --preset debug
+      - if: runner.os == 'Linux'
+        run: >-
+          cmake --preset debug
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - if: runner.os == 'Windows'
+        run: cmake --preset debug
       - run: cmake --build --preset debug
       - if: runner.os == 'Linux'
         run: xvfb-run -a ctest --preset debug
-      - if: runner.os != 'Linux'
-        run: ctest --preset debug
+      # The Windows runners have no OpenGL 4.5 driver, so the tests that need a GL context (labels
+      # render and demo) run on Linux only, against Mesa.
+      - if: runner.os == 'Windows'
+        run: ctest --preset debug -LE "render|demo"
 
   sanitizers:
     # The push-stage hook: every test under asan-ubsan.
@@ -101,15 +122,21 @@ jobs:
     env:
       CC: clang-19
       CXX: clang++-19
-      LIBGL_ALWAYS_SOFTWARE: "1"
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install ninja pre-commit jinja2
-      - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang-19 libstdc++-14-dev && sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev xvfb mesa-utils libgl1-mesa-dri
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: clang-19 libstdc++-14-dev ${{ env.GL_DEV_PACKAGES }} ${{ env.GL_RUN_PACKAGES }}
+          version: sanitizers-1
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: sanitizers
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit

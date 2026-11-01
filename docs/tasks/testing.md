@@ -35,9 +35,12 @@ or weakening one needs the owner (AGENTS.md).
   sanitizer variant the config lists, each in its own preset and build directory (ThreadSanitizer
   cannot share a binary with AddressSanitizer). UBSan is built with `-fno-sanitize-recover`, so
   undefined behaviour fails the test instead of printing and passing.
-- **Every PR and push to a protected branch** (CI): the same two hook stages on Linux, plus build and
-  test on every compiler in the CI matrix. The compilers are pinned at or above the project's floor
-  (`cmake/ProjectSettings.cmake` refuses anything older), not left to the runner's default.
+- **Every PR and push to a protected branch** (CI, `.github/workflows/ci.yml`): the same two hook
+  stages on Linux, plus build and test on every compiler in the CI matrix. On a PR the commit-stage
+  hooks check only the files it changes; a push to `dev` or `main` checks every file. The compilers
+  are pinned at or above the project's floor (`cmake/ProjectSettings.cmake` refuses anything older),
+  not left to the runner's default. Windows runners have no OpenGL 4.5 driver, so the `render` and
+  `demo` tests run on Linux only. apt packages and ccache are cached between runs.
 
 Install both hook stages once per clone; a fresh clone has neither:
 
