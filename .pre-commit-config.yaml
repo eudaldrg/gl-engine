@@ -1,0 +1,67 @@
+# ==========================================================================
+#  GENERATED FILE - do not edit by hand.
+#  Edit this project's .claude/workflows.json (cpp.repo, git), then run
+#  /core:setup-cpp-repo (wf_cpp_repo.py generate --apply) to regenerate.
+# ==========================================================================
+# wf-template:         cpp-repo/3
+# wf-source:           wf_cpp_repo.py precommit
+# wf-config-sha256:    aee45b814b2fdbb2277b44e86d3ddbfc5c4214bb31aaf13ad75e6735f5ef7c22
+# wf-generated-sha256: 788b2bd798406474653914df0e2ac806236260f9279ad10eaf02852e5063e698
+default_stages: [pre-commit]
+# Install both stages once per clone:
+#   pre-commit install && pre-commit install --hook-type pre-push
+# clang-tidy and cppcheck read build/debug/compile_commands.json: run `cmake --preset debug`
+# once first. docs/tasks/testing.md has what each hook is for.
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+
+  - repo: local
+    hooks:
+      - id: clang-tidy
+        name: clang-tidy
+        # -Wno-unknown-warning-option: build/debug may be configured with GCC, whose
+        # warning flags clang-tidy does not know.
+        entry: clang-tidy -p build/debug --quiet --extra-arg=-Wno-unknown-warning-option
+        language: python
+        additional_dependencies: ['clang-tidy==21.1.6']
+        types_or: [c++, c]
+
+      - id: cppcheck
+        name: cppcheck
+        # --language=c++: otherwise every .h is parsed as C. --library=googletest teaches
+        # it the TEST macros.
+        entry: >-
+          cppcheck --language=c++ --library=googletest
+          --enable=warning,performance,portability --error-exitcode=1 --inline-suppr
+          --suppress=missingInclude --suppress=missingIncludeSystem
+        language: system
+        types_or: [c++, c]
+
+      - id: cppcheck-version
+        name: cppcheck is the pinned 2.19.0 (warns only)
+        # CI builds exactly this version; a different local one can disagree on findings.
+        entry: >-
+          python -c 'import subprocess; out = subprocess.run(["cppcheck", "--version"], capture_output=True, text=True).stdout.split(); found = out[-1] if out else "none"; found == "2.19.0" or print("warning: cppcheck " + found + " here, but CI pins 2.19.0: findings can differ. Install 2.19.0, or bump cpp.repo.tools.cppcheck.")'
+        language: python
+        pass_filenames: false
+        always_run: true
+        verbose: true
+
+      - id: build
+        name: incremental build (build/debug must compile)
+        entry: python scripts/check_build.py
+        language: python
+        pass_filenames: false
+        always_run: true
+
+      - id: sanitizers
+        name: test suite under sanitizers (asan-ubsan)
+        entry: python scripts/run_sanitizers.py --variant asan-ubsan
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

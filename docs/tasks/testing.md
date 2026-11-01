@@ -1,0 +1,90 @@
+---
+aliases: [testing, tests, ctest, sanitizers, asan, tsan, quality gates, pre-commit, pre-push, ci]
+sources: [.pre-commit-config.yaml, scripts/check_build.py, scripts/run_sanitizers.py, cmake/ProjectSettings.cmake, apps/demo/CMakeLists.txt]
+---
+
+# Testing
+
+How to run the tests, which automated checks run when, and where each one runs.
+
+## Run
+
+```bash
+cmake --preset debug                    # once per clone; clang-tidy and cppcheck need its compile_commands.json
+cmake --build --preset debug
+ctest --preset debug                    # every discovered test
+python scripts/run_sanitizers.py        # what the pre-push hook runs
+```
+
+On Windows, run these from a Developer PowerShell for Visual Studio, so Ninja finds `cl.exe`.
+
+Add a test binary with `add_project_test(<name> <sources...>)` in a `CMakeLists.txt`. It links
+GoogleTest, the shared options and warnings, registers every `TEST` with ctest, and joins the
+`project_tests` target the sanitizer run builds.
+
+## The checks
+
+What runs today. This list is the floor, not a limit: adding a check needs no permission, removing
+or weakening one needs the owner (AGENTS.md).
+
+- **Every commit** (`.pre-commit-config.yaml`, default stage): clang-format, clang-tidy, cppcheck
+  when enabled, and `scripts/check_build.py`, an incremental `cmake --build build/debug`. The build
+  is there because clang-tidy catches most compile errors in changed files but not a link error or
+  a break in a file the commit did not touch. Kept fast: one build directory, no tests.
+- **Every push** (pre-push stage): `scripts/run_sanitizers.py`, every test binary under each
+  sanitizer variant the config lists, each in its own preset and build directory (ThreadSanitizer
+  cannot share a binary with AddressSanitizer). UBSan is built with `-fno-sanitize-recover`, so
+  undefined behaviour fails the test instead of printing and passing.
+- **Every PR and push to a protected branch** (CI, `.github/workflows/ci.yml`): the same two hook
+  stages on Linux, plus build and test on every compiler in the CI matrix. On a PR the commit-stage
+  hooks check only the files it changes; a push to `dev` or `main` checks every file. The compilers
+  are pinned at or above the project's floor (`cmake/ProjectSettings.cmake` refuses anything older),
+  not left to the runner's default. Windows runners have no OpenGL 4.5 driver, so the `render` and
+  `demo` tests run on Linux only. apt packages and ccache are cached between runs.
+
+Install both hook stages once per clone; a fresh clone has neither:
+
+```bash
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+A local hook is advisory: it runs only where installed, and `--no-verify` skips it. The CI checks
+that branch protection requires are the real gate.
+
+clang-format and clang-tidy are pinned in `.pre-commit-config.yaml` and installed by pre-commit
+from PyPI, so every machine and CI run uses the same binaries regardless of what the system has.
+cppcheck is a system tool (`apt install cppcheck`, `winget install cppcheck`). CI builds the
+version Ubuntu 26.04 ships (`CPPCHECK_VERSION` in `ci.yml`, 2.19.0), so a finding locally is a
+finding in CI; when the local version moves, bump that value with it.
+
+## Sanitizers per platform
+
+| Variant | Linux (GCC, Clang) | Windows (MSVC) |
+|---|---|---|
+| `asan-ubsan` (preset `asan`) | ASan + UBSan | ASan only; MSVC has no UBSan |
+| `tsan` (preset `tsan`) | TSan | skipped; MSVC has no TSan |
+
+## Memory cap
+
+When `ENABLE_TEST_MEMORY_CAP` is ON, every discovered test runs through
+`scripts/with_memory_cap.py`, in its own systemd scope with `MemoryMax=4G` and swap off, so a test
+that allocates without bound fails on its own instead of getting the whole terminal session
+OOM-killed. `TEST_MEMORY_MAX=2G` changes the cap, `0` turns it off. Without a systemd user session
+the test runs uncapped and the launcher says so once. A test killed by the cap fails with exit 137
+and no gtest output.
+
+## Update (2026-10-31): labels, GL tests and a display
+
+`add_project_test(<name> <sources...> [NO_GTEST_MAIN] [LABELS <label...>])`. `NO_GTEST_MAIN` is for
+a test with its own `main()` (`render_tests` parses `--update-golden`); `LABELS` applies to every
+discovered test. Two labels exist: `render` (golden-image tests) and `demo` (`gl_demo --frames 3`).
+Both need a display, so on a headless machine run `ctest` and the pre-push stage under
+`LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a`, as CI does. `docs/tasks/render-tests.md` has the details.
+
+A target that is not a test but is run by one (the demo) joins `project_tests` with
+`add_to_project_tests(<target>)`, so the sanitizer run builds it.
+
+The C dependencies (GLFW, glad) are kept out of `compile_commands.json`. clang-tidy checks a header
+with the compile command of the most similarly named file there, and `input.h` was being parsed as C
+with the command of GLFW's `input.c`.

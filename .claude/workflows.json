@@ -1,0 +1,53 @@
+{
+  "cpp": {
+    "enabled": true,
+    "repo": {
+      "ci": {
+        "aptPackages": [
+          "libx11-dev",
+          "libxrandr-dev",
+          "libxinerama-dev",
+          "libxcursor-dev",
+          "libxi-dev",
+          "libgl-dev",
+          "xvfb",
+          "mesa-utils",
+          "libgl1-mesa-dri"
+        ],
+        "pipPackages": [
+          "jinja2"
+        ],
+        "env": {
+          "LIBGL_ALWAYS_SOFTWARE": "1"
+        },
+        "testWrapper": "xvfb-run -a",
+        "matrix": [
+          {
+            "os": "ubuntu-24.04",
+            "compiler": "gcc",
+            "version": "14"
+          },
+          {
+            "os": "ubuntu-24.04",
+            "compiler": "clang",
+            "version": "19"
+          },
+          {
+            "os": "windows-2022",
+            "compiler": "msvc"
+          }
+        ]
+      },
+      "compilerFloor": {
+        "gcc": "14",
+        "clang": "19",
+        "msvc": "17.8"
+      }
+    }
+  },
+  "git": {
+    "protectedBranches+": [
+      "dev"
+    ]
+  }
+}
