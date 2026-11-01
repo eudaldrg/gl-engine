@@ -60,16 +60,16 @@ if(ENABLE_ASAN AND UNIX AND NOT APPLE)
 endif()
 
 # ---------------------------------------------------------------------------- glad2
-# The loader is generated at configure time, which needs Python with jinja2. Where that is not
-# available, generate it once on the glad2 web generator (gl 4.5, core profile) and unpack it into
+# The loader is generated at configure time, so its header exists before anything is built (the
+# lint job only configures). That needs Python with jinja2. Where that is not available, generate
+# it once on the glad2 web generator (gl 4.5, core profile) and unpack it into
 # third_party/glad-generated/ (git-ignored); that folder is used first when it exists.
 
 set(GL_ENGINE_GLAD_FALLBACK_DIR "${PROJECT_SOURCE_DIR}/third_party/glad-generated")
 
 if(EXISTS "${GL_ENGINE_GLAD_FALLBACK_DIR}/src/gl.c")
   message(STATUS "glad: using the pre-generated loader in ${GL_ENGINE_GLAD_FALLBACK_DIR}")
-  add_library(glad_gl_core_45 STATIC "${GL_ENGINE_GLAD_FALLBACK_DIR}/src/gl.c")
-  target_include_directories(glad_gl_core_45 SYSTEM PUBLIC "${GL_ENGINE_GLAD_FALLBACK_DIR}/include")
+  set(_glad_dir "${GL_ENGINE_GLAD_FALLBACK_DIR}")
 else()
   find_package(Python3 COMPONENTS Interpreter)
   set(_glad_python_ok FALSE)
@@ -91,6 +91,8 @@ else()
       "src/gl.c and include/glad/gl.h exist.")
   endif()
 
+  # The generator is run directly rather than through glad_add_library(): that runs it at build
+  # time, with whichever interpreter find_package(Python) picks, not the one checked for jinja2.
   FetchContent_Declare(
     glad
     URL https://github.com/Dav1dde/glad/archive/refs/tags/v2.0.8.tar.gz
@@ -98,11 +100,30 @@ else()
     SOURCE_SUBDIR cmake
   )
   FetchContent_MakeAvailable(glad)
-  glad_add_library(glad_gl_core_45 STATIC REPRODUCIBLE API gl:core=4.5)
-  get_target_property(_glad_includes glad_gl_core_45 INTERFACE_INCLUDE_DIRECTORIES)
-  set_target_properties(glad_gl_core_45 PROPERTIES
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_glad_includes}")
+
+  set(_glad_dir "${CMAKE_BINARY_DIR}/glad")
+  set(_glad_args --out-path "${_glad_dir}" --api gl:core=4.5 --reproducible c)
+  set(_glad_stamp "${_glad_dir}/args.txt")
+  if(EXISTS "${_glad_stamp}")
+    file(READ "${_glad_stamp}" _glad_previous_args)
+  endif()
+  if(NOT EXISTS "${_glad_dir}/src/gl.c" OR NOT _glad_previous_args STREQUAL "${_glad_args}")
+    message(STATUS "glad: generating the GL 4.5 core loader")
+    file(REMOVE_RECURSE "${_glad_dir}")
+    execute_process(
+      COMMAND "${Python3_EXECUTABLE}" -m glad ${_glad_args}
+      WORKING_DIRECTORY "${glad_SOURCE_DIR}"
+      RESULT_VARIABLE _glad_result
+    )
+    if(NOT _glad_result EQUAL 0)
+      message(FATAL_ERROR "glad: generating the GL loader failed")
+    endif()
+    file(WRITE "${_glad_stamp}" "${_glad_args}")
+  endif()
 endif()
+
+add_library(glad_gl_core_45 STATIC "${_glad_dir}/src/gl.c")
+target_include_directories(glad_gl_core_45 SYSTEM PUBLIC "${_glad_dir}/include")
 
 # Keep the C dependencies out of compile_commands.json. clang-tidy checks a header by borrowing
 # the compile command of the most similarly named file, and a header such as input.h would
