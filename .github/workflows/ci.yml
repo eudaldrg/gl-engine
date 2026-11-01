@@ -24,6 +24,9 @@ env:
   GL_DEV_PACKAGES: libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
   # A virtual display and Mesa's software renderer, for the render and demo tests.
   GL_RUN_PACKAGES: xvfb mesa-utils libgl1-mesa-dri
+  # The cppcheck in Ubuntu 26.04, which local machines run. Ubuntu 24.04 ships 2.13, whose findings
+  # differ, so lint builds this version from source once and caches it. Bump with the local one.
+  CPPCHECK_VERSION: 2.19.0
 
 jobs:
   lint:
@@ -44,8 +47,23 @@ jobs:
       - run: pip install ninja pre-commit jinja2
       - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
-          packages: clang-19 libstdc++-14-dev cppcheck ${{ env.GL_DEV_PACKAGES }}
-          version: lint-1
+          packages: clang-19 libstdc++-14-dev ${{ env.GL_DEV_PACKAGES }}
+          version: lint-2
+      - uses: actions/cache@v4
+        id: cppcheck
+        with:
+          path: ~/cppcheck
+          key: cppcheck-${{ env.CPPCHECK_VERSION }}-${{ runner.os }}
+      - name: Build cppcheck
+        if: steps.cppcheck.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          cmake -S "$RUNNER_TEMP/cppcheck-${CPPCHECK_VERSION}" -B "$RUNNER_TEMP/cppcheck-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/cppcheck" \
+            -DFILESDIR="$HOME/cppcheck/share/cppcheck" -DUSE_MATCHCOMPILER=ON
+          cmake --build "$RUNNER_TEMP/cppcheck-build"
+          cmake --install "$RUNNER_TEMP/cppcheck-build"
+      - run: echo "$HOME/cppcheck/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit

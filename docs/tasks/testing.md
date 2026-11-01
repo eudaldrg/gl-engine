@@ -54,7 +54,9 @@ that branch protection requires are the real gate.
 
 clang-format and clang-tidy are pinned in `.pre-commit-config.yaml` and installed by pre-commit
 from PyPI, so every machine and CI run uses the same binaries regardless of what the system has.
-cppcheck is a system tool (`apt install cppcheck`, `winget install cppcheck`).
+cppcheck is a system tool (`apt install cppcheck`, `winget install cppcheck`). CI builds the
+version Ubuntu 26.04 ships (`CPPCHECK_VERSION` in `ci.yml`, 2.19.0), so a finding locally is a
+finding in CI; when the local version moves, bump that value with it.
 
 ## Sanitizers per platform
 
