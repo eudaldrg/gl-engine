@@ -19,11 +19,11 @@ class GlHandle {
 
     GlHandle(const GlHandle&) = delete;
     GlHandle& operator=(const GlHandle&) = delete;
-    GlHandle(GlHandle&& other) noexcept : id_{std::exchange(other.id_, 0)} {}
+    GlHandle(GlHandle&& other) noexcept : id_{std::exchange(other.id_, 0U)} {}
     GlHandle& operator=(GlHandle&& other) noexcept {
         if (this != &other) {
             Reset();
-            id_ = std::exchange(other.id_, 0);
+            id_ = std::exchange(other.id_, 0U);
         }
         return *this;
     }
