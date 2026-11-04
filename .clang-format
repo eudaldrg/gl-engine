@@ -1,0 +1,20 @@
+# ==========================================================================
+#  GENERATED FILE - do not edit by hand.
+#  Edit this project's .claude/workflows.json under `cpp`, then run
+#  the sync-lint-rules skill (/core:sync-lint-rules) to regenerate.
+# ==========================================================================
+# wf-rules:            cpp-rules/2026.09.2
+# wf-source:           rules/cpp/base.clang-format.json
+# wf-base-sha256:      e76e3b02b3008053d41191d4b38feda929f376c3c966c14d94e1b261f4d6b352
+# wf-overrides-sha256: df088f2714719fda8319ff24e74a242acc96073c2c357f084b7b6c6c8600ccae
+# wf-generated-sha256: 8558da828b029b3dc907a61bcb6e7987305f4e7431b604d74c7190a2606bb3fb
+BasedOnStyle: Google
+AccessModifierOffset: -2
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+ColumnLimit: 100
+DerivePointerAlignment: false
+IndentWidth: 4
+PointerAlignment: Left
+QualifierAlignment: Left
+SortIncludes: true

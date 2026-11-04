@@ -1,4 +1,4 @@
-# 0001. C++23, with GCC 14 / Clang 18 / MSVC 17.8 as the floor
+# 0001. C++23, with GCC 14 / Clang 19 / MSVC 17.8 as the floor
 
 - Status: proposed
 - Date: 2026-10-31
@@ -23,10 +23,10 @@ Supported by every compiler on every runner. Error handling would need either a 
 `expected` (tl::expected: one more dependency, swapped out later) or exceptions. Moving up to C++23
 later is cheap; the cost is what gets written in the meantime.
 
-### B. C++23, floor GCC 14 / Clang 18 / MSVC 17.8
+### B. C++23, floor GCC 14 / Clang 19 / MSVC 17.8
 
 Gives `std::expected`, `std::print`, `std::to_underlying`, deducing `this`, and
-`std::ranges::to`. All three compilers at this floor ship them; GCC 14 and Clang 18 install from the
+`std::ranges::to`. All three compilers at this floor ship them; GCC 14 and Clang 19 install from the
 Ubuntu 24.04 archive on the runner, and current Visual Studio 2022 is past 17.8. Anyone cloning needs
 a compiler from 2024 or later, which is a mild ask for a project that is new in 2026.
 
@@ -45,7 +45,11 @@ is met by every machine and runner the project uses with no extra dependency, an
 implemented across the three compilers.
 
 The floor is the oldest release of each compiler that implements every standard feature the code
-uses; raising it is free. Today that is GCC 14 / Clang 18 / MSVC 17.8.
+uses; raising it is free. Today that is GCC 14 / Clang 19 / MSVC 17.8.
+
+Clang 18 is not enough on Linux, where Clang uses GCC's standard library: libstdc++ declares
+`std::expected` only when `__cpp_concepts >= 202002L`, and Clang 18 still reports `201907L`. Clang 19
+is the first release that reports the newer value.
 
 ## Consequences
 

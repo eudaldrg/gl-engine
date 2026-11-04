@@ -28,7 +28,8 @@ A window that renders a lit test scene, with the tooling every later milestone u
 ImGui's `.ini` layout file is turned off.
 
 **Test scene:** three axes (x red, y green, z blue), a procedural icosphere and a cube, lit by one
-directional light with Blinn-Phong.
+directional light with Blinn-Phong. The renderer provides the meshes, the grid and the axes; the
+demo and the render tests choose which meshes to place where.
 
 ## Non-goals
 
@@ -122,7 +123,8 @@ before the context.
 ### `renderer`: host contract
 
 ```cpp
-using GlLoader = void* (*)(const char*);
+using GlProc = void (*)();
+using GlLoader = GlProc (*)(const char*);
 
 struct RenderTarget { GLuint framebuffer; int width; int height; };
 
@@ -135,7 +137,9 @@ struct View {
 class Renderer {
 public:
     static Result<Renderer> create(GlLoader, RendererConfig);   // fails unless GL >= 4.5 core
-    void render(const RenderTarget&, const View&);
+    MeshId add_mesh(const MeshData&);                            // upload once
+    void add_instance(const MeshInstance&);                      // {mesh, model, color}
+    void render(const RenderTarget&, const View&);              // instances, then grid and axes
     std::span<const std::filesystem::path> shader_files() const;
     Result<void> reload_shader(const std::filesystem::path&);    // keeps the old program on error
 };
@@ -172,7 +176,7 @@ using InputEvent = std::variant<MouseMove, MouseButton, Scroll, Key, Resize>;
 
 ## Decisions
 
-- ADR 0001: C++23, GCC 14 / Clang 18 / MSVC 17.8.
+- ADR 0001: C++23, GCC 14 / Clang 19 / MSVC 17.8.
 - ADR 0002: `std::expected` for handleable failures, abort on broken invariants, no throwing.
 - ADR 0003: the host owns the window, context and loop.
 - Design doc choices, architecture register: glad2 (row 4), GoogleTest (5), retained scene with one

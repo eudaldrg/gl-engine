@@ -16,7 +16,7 @@ the assumption spreads through every pass that binds a framebuffer or reads the 
 
 ### A. The host passes in what the renderer needs
 
-- At start-up: a GL function loader (`void* (*)(const char*)`), which every windowing library
+- At start-up: a GL function loader (`void (*(*)(const char*))()`, a name to a function pointer), which every windowing library
   provides.
 - Each frame: a render target, `{framebuffer id, width, height}`.
 - The host creates the context, makes it current, and runs the loop. The renderer has no window
