@@ -101,9 +101,9 @@ non-goals.
 
 | # | Question | Status | Settled by | Depends on | ADR |
 |---|---|---|---|---|---|
-| 1 | C++ standard and compiler floor | proposed | M1 | | 0001 |
-| 2 | Error handling policy | proposed | M1 | 1 | 0002 |
-| 3 | Renderer / host boundary | proposed | M1 | | 0003 |
+| 1 | C++ standard and compiler floor | accepted | M1 | | 0001 |
+| 2 | Error handling policy | accepted | M1 | 1 | 0002 |
+| 3 | Renderer / host boundary | accepted | M1 | | 0003 |
 | 4 | GL loader: glad2 generated at configure time; pre-generated folder as fallback | design doc | M1 | 3 | |
 | 5 | Unit-test framework: GoogleTest | design doc | M1 | | |
 | 6 | Per-frame renderer API: retained scene, one `render(target, view)` call | design doc | M1 | 3 | |

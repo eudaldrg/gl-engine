@@ -1,6 +1,6 @@
 # 0001. C++23, with GCC 14 / Clang 19 / MSVC 17.8 as the floor
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-31
 - Settled at: M1
 
