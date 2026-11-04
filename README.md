@@ -84,8 +84,14 @@ profile `core`, language C. Unpack the archive into `third_party/glad-generated/
 `third_party/glad-generated/src/gl.c` and `third_party/glad-generated/include/glad/gl.h` exist. The
 folder is git-ignored, and when present, configure uses it instead of generating the loader.
 
+## How it is developed
+
+I design each milestone and plan it: the roadmap, the architecture, a design doc per milestone and
+ADRs for the decisions that matter. An LLM coding agent implements the plan, and each change lands
+as a pull request that I review. The agent follows [AGENTS.md](AGENTS.md) and the workflow skills I
+wrote for it in [eudaldrg-workflows](https://github.com/eudaldrg/eudaldrg-workflows).
+
 ## Docs
 
-`docs/roadmap.md` lists the milestones, `docs/architecture.md` describes the components and their
-contracts, `docs/design/` has one design doc per milestone, `docs/adr/` the decisions,
-`docs/modules/` each library, and `docs/tasks/` each procedure.
+[docs/README.md](docs/README.md) lists them. The main ones: [architecture](docs/architecture.md),
+the [ADRs](docs/adr/), the [M1 design](docs/design/m1-base.md) and the [roadmap](docs/roadmap.md).

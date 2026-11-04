@@ -1,6 +1,6 @@
 # 0002. Expected failures return `std::expected`; our code never throws
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-31
 - Settled at: M1
 

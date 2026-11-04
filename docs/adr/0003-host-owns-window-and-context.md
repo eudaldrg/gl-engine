@@ -1,6 +1,6 @@
 # 0003. The host owns the window and GL context; the renderer only draws
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-31
 - Settled at: M1
 
