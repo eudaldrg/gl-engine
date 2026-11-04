@@ -18,15 +18,20 @@ A public, MIT-licensed real-time 3D engine in C++23 and OpenGL 4.5 core.
 
 - **Nothing vendored.** Dependencies come through CMake FetchContent at pinned versions.
 - **Original code only.** Reimplement ideas from elsewhere; do not copy code into the repo.
-- **Public history is for any reader.** Commit messages, PR titles and
-  bodies, review replies, issues and docs say what changed and why, nothing else. No notes
-  addressed to the maintainer, no process asides (a retry, a mistake, a PR that merged early), no tool or
-  AI attribution.
+- **Public history is for any reader.** Commit messages, PR titles and bodies, review replies,
+  issues and docs describe the change and why, not the tooling or the process that produced it: no
+  notes addressed to the maintainer, no process asides (a retry, a mistake, a PR that merged early).
 
 ## Docs
 
-`docs/adr/` holds the ADRs. `docs/modules/` holds one doc per component, `docs/tasks/` one per
-procedure.
+`docs/adr/` holds the ADRs and `docs/design/` one design doc per milestone. `docs/modules/` (one doc
+per component) and `docs/tasks/` (one per procedure) extend this file: they are context for coding
+agents, and their front matter (`aliases`, `sources`, `decisions`) is what the agents' knowledge
+retrieval matches on.
+
+The `/core:*` commands below come from the maintainer's agent workflows plugin,
+[eudaldrg-workflows](https://github.com/eudaldrg/eudaldrg-workflows), which also generates
+`.clang-format`, `.clang-tidy` and `.pre-commit-config.yaml` from `.claude/workflows.json`.
 
 ## Lint / format / quality gates
 
