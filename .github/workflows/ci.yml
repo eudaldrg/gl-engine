@@ -1,0 +1,162 @@
+# CI: the commit-stage hooks (lint), the push-stage hook (sanitizers), and a build and test on every
+# compiler in the matrix, each pinned at or above the floor in cmake/ProjectSettings.cmake.
+#
+# Speed: apt packages are cached by awalsh128/cache-apt-pkgs-action (keyed on the package list) and
+# compiled objects by ccache, so a run with a warm cache installs and rebuilds little. Lint checks
+# only the files a pull request changes; pushes to main and dev check every file.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIBGL_ALWAYS_SOFTWARE: "1"
+  # The X11 and GL headers GLFW builds against.
+  GL_DEV_PACKAGES: libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
+  # A virtual display and Mesa's software renderer, for the render and demo tests.
+  GL_RUN_PACKAGES: xvfb mesa-utils libgl1-mesa-dri
+  # The cppcheck in Ubuntu 26.04, which local machines run. Ubuntu 24.04 ships 2.13, whose findings
+  # differ, so lint builds this version from source once and caches it. Bump with the local one.
+  CPPCHECK_VERSION: 2.19.0
+
+jobs:
+  lint:
+    # The commit-stage hooks. `build` is skipped: the test job builds the same preset.
+    name: lint
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-19
+      CXX: clang++-19
+      SKIP: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the PR's base, to diff against
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja pre-commit jinja2
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: clang-19 libstdc++-14-dev ${{ env.GL_DEV_PACKAGES }}
+          version: lint-2
+      - uses: actions/cache@v4
+        id: cppcheck
+        with:
+          path: ~/cppcheck
+          key: cppcheck-${{ env.CPPCHECK_VERSION }}-${{ runner.os }}
+      - name: Build cppcheck
+        if: steps.cppcheck.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          cmake -S "$RUNNER_TEMP/cppcheck-${CPPCHECK_VERSION}" -B "$RUNNER_TEMP/cppcheck-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/cppcheck" \
+            -DFILESDIR="$HOME/cppcheck/share/cppcheck" -DUSE_MATCHCOMPILER=ON
+          cmake --build "$RUNNER_TEMP/cppcheck-build"
+          cmake --install "$RUNNER_TEMP/cppcheck-build"
+      - run: echo "$HOME/cppcheck/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: cmake --preset debug
+      - name: Hooks on the changed files
+        if: github.event_name == 'pull_request'
+        run: >-
+          pre-commit run --show-diff-on-failure
+          --from-ref origin/${{ github.base_ref }} --to-ref HEAD
+      - name: Hooks on every file
+        if: github.event_name != 'pull_request'
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    name: test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-14
+            os: ubuntu-24.04
+            cc: gcc-14
+            cxx: g++-14
+            packages: g++-14
+          - name: clang-19
+            os: ubuntu-24.04
+            cc: clang-19
+            cxx: clang++-19
+            packages: clang-19 libstdc++-14-dev
+          - name: msvc
+            os: windows-2022
+            cc: cl
+            cxx: cl
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja jinja2
+      - if: runner.os == 'Linux'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: ${{ matrix.packages }} ${{ env.GL_DEV_PACKAGES }} ${{ env.GL_RUN_PACKAGES }}
+          version: test-${{ matrix.name }}-1
+      - if: runner.os == 'Linux'
+        uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: test-${{ matrix.name }}
+      - if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - if: runner.os == 'Linux'
+        run: >-
+          cmake --preset debug
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - if: runner.os == 'Windows'
+        run: cmake --preset debug
+      - run: cmake --build --preset debug
+      - if: runner.os == 'Linux'
+        run: xvfb-run -a ctest --preset debug
+      # The Windows runners have no OpenGL 4.5 driver, so the tests that need a GL context (labels
+      # render and demo) run on Linux only, against Mesa.
+      - if: runner.os == 'Windows'
+        run: ctest --preset debug -LE "render|demo"
+
+  sanitizers:
+    # The push-stage hook: every test under asan-ubsan.
+    name: sanitizers
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-19
+      CXX: clang++-19
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ninja pre-commit jinja2
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: clang-19 libstdc++-14-dev ${{ env.GL_DEV_PACKAGES }} ${{ env.GL_RUN_PACKAGES }}
+          version: sanitizers-1
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: sanitizers
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: xvfb-run -a pre-commit run --all-files --hook-stage pre-push
