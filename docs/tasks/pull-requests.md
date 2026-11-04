@@ -11,7 +11,10 @@ success.
 
 - Work happens on `feature/<slug>` branches cut from the remote `dev`
   (`git fetch origin dev && git checkout -b feature/<slug> origin/dev`).
-- Every change reaches `dev` through a PR. The owner reviews it and squash-merges it.
+- Every change reaches `dev` through a PR, one topic per PR. The owner reviews it and merges it by
+  the method its description recommends (`/core:pull-request`): rebase for one commit or clean
+  steps, squash for review fixups or plan commits. A squash takes the PR title and description as
+  its message (a repo setting), so a squash PR's description is written as that commit.
 - A release is a PR from `dev` into `main`, merged as a **merge
   commit** (not squashed, so `main` keeps the integration history), then tagged
   `vX.Y.Z` on `main`. Only when the owner says so.

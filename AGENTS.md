@@ -51,7 +51,8 @@ repo's own file and is edited directly.
 
 ## Branches and pull requests
 
-`feature/<slug>` → PR into `dev`, squash-merged by the owner after review. A release is `dev` →
+`feature/<slug>` → PR into `dev`, merged by the owner after review by the method the PR recommends
+(`/core:pull-request`). A release is `dev` →
 `main` as a merge commit, then a `vX.Y.Z` tag on `main`, only when the owner says so. Never merge
 your own PR.
 `docs/tasks/pull-requests.md` has the procedure and its gotchas.
