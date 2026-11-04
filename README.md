@@ -1,14 +1,38 @@
 # gl-engine
 
-A small real-time 3D renderer in modern C++ (C++23, OpenGL 4.5 core), built stage by stage, ending
-in a point-cloud viewer.
+[![ci](https://github.com/eudaldrg/gl-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/eudaldrg/gl-engine/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-The idea comes from an engine assignment in a game design master's. The goal here is a modern C++
-take on that kind of engine: RAII ownership, explicit dependencies instead of singletons, and
-errors returned as values.
+A small real-time 3D renderer in C++23 and OpenGL 4.5 core, built in milestones. The end goal is a
+point-cloud viewer.
 
-Status: M1 (base) implemented: a GLFW demo renders a lit test scene with debug draw, orbit and fly
-cameras, an ImGui panel and shader hot reload. `docs/roadmap.md` has what comes next.
+![The demo: orbiting the scene, then editing the fragment shader while it runs](docs/media/m1-demo.gif)
+
+It started from an engine assignment in a game design master's. This is a rewrite of that kind of
+engine in modern C++: RAII ownership, explicit dependencies instead of singletons, and errors
+returned as values.
+
+## Status
+
+M1 (base) is done. It has:
+
+- a renderer library with no windowing code. The host owns the window, the GL context and the loop,
+  and passes the framebuffer to draw into ([ADR 0003](docs/adr/0003-host-owns-window-and-context.md)).
+  The GLFW demo and the render tests are two such hosts.
+- shader hot reload: saving a shader updates the image within a second. If the edit does not
+  compile, the error is logged and the previous program keeps drawing.
+- OpenGL 4.5 core with direct state access, RAII handles for GL objects, and GL debug output in the
+  log.
+- `std::expected` for errors, no exceptions ([ADR 0002](docs/adr/0002-errors-as-values-no-throw.md)).
+- orbit and fly cameras, a Dear ImGui panel with frame times, a grid and axes, and a wireframe
+  toggle.
+- unit tests and golden-image render tests (compared on Mesa llvmpipe), ASan and UBSan builds, and
+  clang-format, clang-tidy and cppcheck in pre-commit hooks. CI runs on Linux (GCC, Clang) and
+  Windows (MSVC).
+
+Next is M2, the point-cloud viewer: loading PLY files, drawing millions of points, coloring by
+height, intensity or stored color, eye-dome lighting, and picking points to measure distances.
+[docs/roadmap.md](docs/roadmap.md) has the milestones after that.
 
 ## Requirements
 
@@ -62,5 +86,6 @@ folder is git-ignored, and when present, configure uses it instead of generating
 
 ## Docs
 
-`docs/architecture.md` describes the components and their contracts, `docs/adr/` the decisions,
+`docs/roadmap.md` lists the milestones, `docs/architecture.md` describes the components and their
+contracts, `docs/design/` has one design doc per milestone, `docs/adr/` the decisions,
 `docs/modules/` each library, and `docs/tasks/` each procedure.
