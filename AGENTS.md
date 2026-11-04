@@ -4,7 +4,7 @@ Agent instructions for this repo. `CLAUDE.md` is a symlink to this file; edit `A
 
 ## What this is
 
-A public, MIT-licensed real-time 3D engine in C++23 and OpenGL 4.5 core.
+A public, MIT-licensed real-time 3D renderer in C++23 and OpenGL 4.5 core.
 `docs/roadmap.md` holds the goals, milestones and non-goals.
 
 ## How work is split
@@ -37,7 +37,7 @@ The `/core:*` commands below come from the maintainer's agent workflows plugin,
 
 **Rule for agents:** code must pass every automated check before it is committed or pushed. Never
 bypass a hook (`--no-verify`) and never weaken a check, a lint rule or a test to make something
-pass. Adding a check needs no permission; removing or loosening one needs the owner. Silence a
+pass. Adding a check needs no permission; removing or loosening one needs the maintainer. Silence a
 warning only at the line that triggers it (`// NOLINT(<check>)`), with a comment saying why, never
 file-wide or project-wide. When a style preference comes up, tighten `.clang-format` / `.clang-tidy`
 (through `.claude/workflows.json` and `/core:sync-lint-rules`) rather than writing prose style docs.
@@ -56,8 +56,7 @@ repo's own file and is edited directly.
 
 ## Branches and pull requests
 
-`feature/<slug>` → PR into `dev`, merged by the owner after review by the method the PR recommends
-(`/core:pull-request`). A release is `dev` →
-`main` as a merge commit, then a `vX.Y.Z` tag on `main`, only when the owner says so. Never merge
-your own PR.
-`docs/tasks/pull-requests.md` has the procedure and its gotchas.
+`feature/<slug>` → PR into `dev`, merged by the maintainer after review by the method the PR
+recommends (`/core:pull-request`). A release is `dev` → `main` as a merge commit, then a `vX.Y.Z`
+tag on `main`, only when the maintainer says so. Never merge your own PR.
+`docs/tasks/pull-requests.md` has this repo's branch, merge and release rules.
