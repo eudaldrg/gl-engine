@@ -87,9 +87,9 @@ folder is git-ignored, and when present, configure uses it instead of generating
 ## How it is developed
 
 I design each milestone and plan it: the roadmap, the architecture, a design doc per milestone and
-ADRs for the decisions that matter. An LLM coding agent implements the plan in small pull requests,
-and I review every PR before it merges. The agent follows [AGENTS.md](AGENTS.md) and the workflow
-skills I wrote for it in [eudaldrg-workflows](https://github.com/eudaldrg/eudaldrg-workflows).
+ADRs for the decisions that matter. An LLM coding agent implements the plan, and each change lands
+as a pull request that I review. The agent follows [AGENTS.md](AGENTS.md) and the workflow skills I
+wrote for it in [eudaldrg-workflows](https://github.com/eudaldrg/eudaldrg-workflows).
 
 ## Docs
 
